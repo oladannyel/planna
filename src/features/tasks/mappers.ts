@@ -33,7 +33,10 @@ export function rowToTask(row: TaskRow): Task {
     status: row.status,
     priority: row.priority,
     tags: row.tags,
-    dueDate: row.due_date,
+    dueDate: row.due_date ?? null,
+    // Coalesce undefined → null so consumers are safe even before the due_at
+    // migration has been applied (a missing column reads back as undefined).
+    dueAt: row.due_at ?? null,
     estimatedMinutes: row.estimated_minutes,
     source: row.source,
     requestedBy: row.requested_by,

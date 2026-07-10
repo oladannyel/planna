@@ -17,6 +17,7 @@ import {
   completionRate,
   cycleTimes,
   onTimeRate,
+  scheduledRate,
   tasksPerDay,
 } from "@/features/analytics/metrics";
 import { getTasks } from "@/features/tasks/queries";
@@ -47,6 +48,7 @@ export default async function AnalyticsPage() {
       <h1 className="text-2xl font-bold">Analytics</h1>
       <OnTimeRateCard
         onTimeRate={onTimeRate(tasks)}
+        scheduledRate={scheduledRate(tasks)}
         completionRate={completionRate(tasks)}
         carryoverRate={carryoverRate(tasks)}
       />

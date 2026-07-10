@@ -196,3 +196,16 @@ alter table weekly_reports alter column narrative drop not null;
 -- Support listing a workspace's reflection history by week.
 create index if not exists weekly_reports_workspace_week_idx
   on weekly_reports(workspace_id, week_start desc);
+
+
+-- ======================================================================
+-- migrations/0005_due_at.sql
+-- ======================================================================
+-- Add a precise timestamp deadline alongside the date-only due_date.
+alter table tasks add column if not exists due_at timestamptz;
+
+update tasks
+set due_at = (due_date::timestamptz + interval '23 hours 59 minutes 59 seconds')
+where due_at is null and due_date is not null;
+
+create index if not exists tasks_workspace_due_at_idx on tasks(workspace_id, due_at);

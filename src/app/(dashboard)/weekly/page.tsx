@@ -1,3 +1,4 @@
+import { TaskSheetProvider } from "@/features/tasks/TaskSheetProvider";
 import { getTasksInRange } from "@/features/tasks/queries";
 import { WeeklyPlanner } from "@/features/weekly";
 import { bucketByDay, resolveWeekStart, shiftWeek, weekDays } from "@/features/weekly/week";
@@ -18,11 +19,13 @@ export default async function WeeklyPage({
   const buckets = bucketByDay(tasks, days);
 
   return (
-    <WeeklyPlanner
-      days={days}
-      buckets={buckets}
-      prevWeek={shiftWeek(weekStart, -1)}
-      nextWeek={shiftWeek(weekStart, 1)}
-    />
+    <TaskSheetProvider>
+      <WeeklyPlanner
+        days={days}
+        buckets={buckets}
+        prevWeek={shiftWeek(weekStart, -1)}
+        nextWeek={shiftWeek(weekStart, 1)}
+      />
+    </TaskSheetProvider>
   );
 }

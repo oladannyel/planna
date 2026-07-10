@@ -17,6 +17,7 @@ const stats: InsightStats = {
   carryoverRate: 16,
   avgCycleTimeHours: 9,
   onTimeRate: 71,
+  scheduledRate: 50,
   topTags: [],
 };
 
@@ -30,6 +31,7 @@ function makeTask(overrides: Partial<Task>): Task {
     priority: "medium",
     tags: [],
     dueDate: "2026-06-10",
+    dueAt: null,
     estimatedMinutes: null,
     source: "manual",
     requestedBy: null,

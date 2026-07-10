@@ -14,6 +14,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     priority: "high",
     tags: [],
     dueDate: null,
+    dueAt: null,
     estimatedMinutes: null,
     source: "manual",
     requestedBy: null,

@@ -17,7 +17,7 @@ export async function getTasks(): Promise<Result<Task[]>> {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return err({ code: "DB_ERROR", message: error.message, cause: error });
+    return err({ code: "DB_ERROR", message: error.message });
   }
 
   return ok(data.map(rowToTask));
@@ -36,7 +36,7 @@ export async function getTaskById(taskId: string): Promise<Result<Task>> {
     .maybeSingle();
 
   if (error) {
-    return err({ code: "DB_ERROR", message: error.message, cause: error });
+    return err({ code: "DB_ERROR", message: error.message });
   }
   if (!data) {
     return err({ code: "NOT_FOUND", message: "Task not found" });
@@ -59,7 +59,7 @@ export async function getTasksInRange(start: string, end: string): Promise<Resul
     .order("due_date", { ascending: true });
 
   if (error) {
-    return err({ code: "DB_ERROR", message: error.message, cause: error });
+    return err({ code: "DB_ERROR", message: error.message });
   }
 
   return ok(data.map(rowToTask));

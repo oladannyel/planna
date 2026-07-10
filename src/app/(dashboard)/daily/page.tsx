@@ -1,6 +1,7 @@
 import { DailyView } from "@/features/daily";
 import { completedDates, computeCurrentStreak } from "@/features/daily/streak";
 import { QuickAdd } from "@/features/tasks/QuickAdd";
+import { TaskSheetProvider } from "@/features/tasks/TaskSheetProvider";
 import { detectCarryovers } from "@/features/tasks/carryover";
 import { getTasks } from "@/features/tasks/queries";
 
@@ -18,7 +19,9 @@ export default async function DailyPage() {
   return (
     <div className="space-y-6">
       <QuickAdd />
-      <DailyView tasks={display} carryoverCount={carryoverIds.size} streak={streak} />
+      <TaskSheetProvider>
+        <DailyView tasks={display} carryoverCount={carryoverIds.size} streak={streak} />
+      </TaskSheetProvider>
     </div>
   );
 }

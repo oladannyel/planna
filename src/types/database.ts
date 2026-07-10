@@ -49,6 +49,7 @@ export interface Database {
           priority: TaskPriorityEnum;
           tags: string[];
           due_date: string | null;
+          due_at: string | null;
           estimated_minutes: number | null;
           source: TaskSourceEnum;
           requested_by: string | null;
@@ -68,6 +69,7 @@ export interface Database {
           priority?: TaskPriorityEnum;
           tags?: string[];
           due_date?: string | null;
+          due_at?: string | null;
           estimated_minutes?: number | null;
           source?: TaskSourceEnum;
           requested_by?: string | null;
@@ -87,6 +89,7 @@ export interface Database {
           priority?: TaskPriorityEnum;
           tags?: string[];
           due_date?: string | null;
+          due_at?: string | null;
           estimated_minutes?: number | null;
           source?: TaskSourceEnum;
           requested_by?: string | null;

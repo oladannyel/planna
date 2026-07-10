@@ -74,7 +74,7 @@ export async function generateMonthlySummary(
     .lte("created_at", endOfMonth(first).toISOString());
 
   if (error) {
-    return err({ code: "DB_ERROR", message: error.message, cause: error });
+    return err({ code: "DB_ERROR", message: error.message });
   }
 
   const tasks = data.map(rowToTask);
@@ -110,7 +110,7 @@ export async function generateMonthlySummary(
   );
 
   if (upsertError) {
-    return err({ code: "DB_ERROR", message: upsertError.message, cause: upsertError });
+    return err({ code: "DB_ERROR", message: upsertError.message });
   }
 
   revalidatePath("/monthly");

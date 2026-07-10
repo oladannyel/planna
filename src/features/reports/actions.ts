@@ -65,7 +65,7 @@ export async function generateWeeklyReport(weekStart: string): Promise<Result<We
     .lte("created_at", endOfDay(addDays(start, 6)).toISOString());
 
   if (error) {
-    return err({ code: "DB_ERROR", message: error.message, cause: error });
+    return err({ code: "DB_ERROR", message: error.message });
   }
 
   const tasks = data.map(rowToTask);
@@ -88,20 +88,18 @@ export async function generateWeeklyReport(weekStart: string): Promise<Result<We
     return err({ code: "AI_ERROR", message: "Weekly report generation failed", cause });
   }
 
-  const { error: upsertError } = await ctx.value.supabase
-    .from("weekly_reports")
-    .upsert(
-      {
-        workspace_id: ctx.value.workspaceId,
-        week_start: weekStart,
-        narrative,
-        stats: statsToJson(stats),
-      },
-      { onConflict: "workspace_id,week_start" },
-    );
+  const { error: upsertError } = await ctx.value.supabase.from("weekly_reports").upsert(
+    {
+      workspace_id: ctx.value.workspaceId,
+      week_start: weekStart,
+      narrative,
+      stats: statsToJson(stats),
+    },
+    { onConflict: "workspace_id,week_start" },
+  );
 
   if (upsertError) {
-    return err({ code: "DB_ERROR", message: upsertError.message, cause: upsertError });
+    return err({ code: "DB_ERROR", message: upsertError.message });
   }
 
   revalidatePath("/reports");

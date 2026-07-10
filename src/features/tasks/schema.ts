@@ -8,7 +8,9 @@ export const taskInputSchema = z.object({
   priority: z.enum(["low", "medium", "high", "urgent"]),
   tags: z.array(z.string().min(1).max(50)).max(10),
   dueDate: z.string().regex(ISO_DATE_RE).optional(),
+  dueAt: z.string().datetime().optional(),
   estimatedMinutes: z.number().int().positive().max(14400).optional(),
+  status: z.enum(["todo", "in_progress", "done", "cancelled"]).optional(),
 });
 
 export const requestInputSchema = z.object({

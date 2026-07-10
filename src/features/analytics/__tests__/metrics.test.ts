@@ -12,6 +12,7 @@ import {
   isOnTime,
   monthlyStats,
   onTimeRate,
+  scheduledRate,
   tasksPerDay,
   topTags,
 } from "../metrics";
@@ -26,6 +27,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     priority: "medium",
     tags: [],
     dueDate: null,
+    dueAt: null,
     estimatedMinutes: null,
     source: "manual",
     requestedBy: null,
@@ -79,11 +81,49 @@ describe("isOnTime / onTimeRate", () => {
     expect(onTimeRate([onTimeTask, lateTask])).toBe(50);
   });
 
-  it("is false without a due date or completion", () => {
+  it("is false without a deadline or completion", () => {
     expect(isOnTime(makeTask({ status: "done", completedAt: "2026-06-20T10:00:00.000Z" }))).toBe(
       false,
     );
     expect(isOnTime(makeTask({ status: "todo" }))).toBe(false);
+  });
+
+  it("prefers the precise dueAt over date-only dueDate", () => {
+    // dueDate end-of-day would be on-time, but the precise 9am dueAt was missed.
+    const task = makeTask({
+      status: "done",
+      dueDate: "2026-06-20",
+      dueAt: "2026-06-20T09:00:00.000Z",
+      completedAt: "2026-06-20T10:00:00.000Z",
+    });
+    expect(isOnTime(task)).toBe(false);
+  });
+
+  it("excludes deadline-less completed tasks from the denominator (not counted late)", () => {
+    const onTime = makeTask({
+      status: "done",
+      dueAt: "2026-06-20T12:00:00.000Z",
+      completedAt: "2026-06-20T10:00:00.000Z",
+    });
+    const noDeadline = makeTask({ status: "done", completedAt: "2026-06-20T10:00:00.000Z" });
+    // Without a deadline the second task is ignored, so the rate is 100%, not 50%.
+    expect(onTimeRate([onTime, noDeadline])).toBe(100);
+  });
+});
+
+describe("scheduledRate", () => {
+  it("is the share of tasks that have any deadline", () => {
+    const tasks = [
+      makeTask({ dueAt: "2026-06-20T12:00:00.000Z" }),
+      makeTask({ dueDate: "2026-06-20" }),
+      makeTask(),
+      makeTask(),
+    ];
+    expect(scheduledRate(tasks)).toBe(50);
+  });
+
+  it("returns 0 for empty input", () => {
+    expect(scheduledRate([])).toBe(0);
   });
 });
 

@@ -35,7 +35,7 @@ export async function addQuestion(question: string): Promise<Result<EthicsQuesti
     .single();
 
   if (error) {
-    return err({ code: "DB_ERROR", message: error.message, cause: error });
+    return err({ code: "DB_ERROR", message: error.message });
   }
 
   revalidatePath("/ethics");
@@ -67,7 +67,7 @@ export async function updateQuestion(
     .single();
 
   if (error) {
-    return err({ code: "DB_ERROR", message: error.message, cause: error });
+    return err({ code: "DB_ERROR", message: error.message });
   }
 
   revalidatePath("/ethics");
@@ -85,7 +85,7 @@ export async function deactivateQuestion(id: string): Promise<Result<{ id: strin
     .eq("id", id);
 
   if (error) {
-    return err({ code: "DB_ERROR", message: error.message, cause: error });
+    return err({ code: "DB_ERROR", message: error.message });
   }
 
   revalidatePath("/ethics");
@@ -103,7 +103,7 @@ export async function reorderQuestions(orderedIds: string[]): Promise<Result<{ c
       .eq("workspace_id", ctx.value.workspaceId)
       .eq("id", id);
     if (error) {
-      return err({ code: "DB_ERROR", message: error.message, cause: error });
+      return err({ code: "DB_ERROR", message: error.message });
     }
   }
 
@@ -140,7 +140,7 @@ export async function saveReflection(
   );
 
   if (error) {
-    return err({ code: "DB_ERROR", message: error.message, cause: error });
+    return err({ code: "DB_ERROR", message: error.message });
   }
 
   revalidatePath("/ethics");

@@ -21,6 +21,7 @@ function makeTask(id: string, status: Task["status"]): Task {
     priority: "medium",
     tags: [],
     dueDate: null,
+    dueAt: null,
     estimatedMinutes: null,
     source: "manual",
     requestedBy: null,

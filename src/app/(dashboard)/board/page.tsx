@@ -1,5 +1,6 @@
 import { KanbanBoard } from "@/features/board";
 import { QuickAdd } from "@/features/tasks/QuickAdd";
+import { TaskSheetProvider } from "@/features/tasks/TaskSheetProvider";
 import { getTasks } from "@/features/tasks/queries";
 
 export default async function BoardPage() {
@@ -10,7 +11,9 @@ export default async function BoardPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Board</h1>
       <QuickAdd />
-      <KanbanBoard initialTasks={tasks} />
+      <TaskSheetProvider>
+        <KanbanBoard initialTasks={tasks} />
+      </TaskSheetProvider>
     </div>
   );
 }

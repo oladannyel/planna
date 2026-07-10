@@ -34,7 +34,7 @@ export async function ensureWorkspace(): Promise<Result<WorkspaceRef>> {
     .maybeSingle();
 
   if (selectError) {
-    return err({ code: "DB_ERROR", message: selectError.message, cause: selectError });
+    return err({ code: "DB_ERROR", message: selectError.message });
   }
 
   if (existing) {
@@ -58,7 +58,7 @@ export async function ensureWorkspace(): Promise<Result<WorkspaceRef>> {
     }
 
     if (error && error.code !== POSTGRES_UNIQUE_VIOLATION) {
-      return err({ code: "DB_ERROR", message: error.message, cause: error });
+      return err({ code: "DB_ERROR", message: error.message });
     }
     // Unique violation on slug — retry with a fresh token.
   }

@@ -19,7 +19,7 @@ async function listQuestions(activeOnly: boolean): Promise<Result<EthicsQuestion
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
   if (error) {
-    return err({ code: "DB_ERROR", message: error.message, cause: error });
+    return err({ code: "DB_ERROR", message: error.message });
   }
   return ok(data.map(rowToQuestion));
 }
@@ -45,7 +45,7 @@ export async function getReflection(weekStart: string): Promise<Result<Reflectio
     .maybeSingle();
 
   if (error) {
-    return err({ code: "DB_ERROR", message: error.message, cause: error });
+    return err({ code: "DB_ERROR", message: error.message });
   }
   if (!data || data.ethics_answers === null) return ok(null);
 
@@ -66,7 +66,7 @@ export async function getReflectionHistory(limit = 8): Promise<Result<Reflection
     .limit(limit);
 
   if (error) {
-    return err({ code: "DB_ERROR", message: error.message, cause: error });
+    return err({ code: "DB_ERROR", message: error.message });
   }
 
   return ok(

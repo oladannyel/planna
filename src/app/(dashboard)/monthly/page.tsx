@@ -14,6 +14,7 @@ import {
   resolveMonth,
   shiftMonth,
 } from "@/features/monthly";
+import { TaskSheetProvider } from "@/features/tasks/TaskSheetProvider";
 import { getTasks } from "@/features/tasks/queries";
 
 export default async function MonthlyPage({
@@ -70,7 +71,9 @@ export default async function MonthlyPage({
         hasTasks={created.length > 0}
         initialNarrative={initialNarrative}
       />
-      <MonthlyCalendar weeks={weeks} dots={dots} tasks={all} />
+      <TaskSheetProvider>
+        <MonthlyCalendar weeks={weeks} dots={dots} tasks={all} />
+      </TaskSheetProvider>
     </div>
   );
 }

@@ -15,7 +15,8 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   tags: string[];
-  dueDate: string | null; // ISO date string "YYYY-MM-DD"
+  dueDate: string | null; // ISO date string "YYYY-MM-DD" (derived from dueAt, used for grouping)
+  dueAt: string | null; // ISO timestamp — the precise deadline; source of truth
   estimatedMinutes: number | null;
   source: TaskSource;
   requestedBy: string | null;
@@ -33,14 +34,18 @@ export interface TaskInput {
   priority: TaskPriority;
   tags: string[];
   dueDate?: string;
+  dueAt?: string;
   estimatedMinutes?: number;
+  status?: TaskStatus;
 }
 
 export interface ParsedTaskResult {
   title: string;
+  description?: string; // AI-generated short description
   priority: TaskPriority;
   tags: string[];
   dueDate: string | null;
   estimatedMinutes: number | null;
+  status: TaskStatus; // inferred from inline markers
   confidence: number; // 0–1, for UI feedback
 }

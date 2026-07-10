@@ -14,6 +14,7 @@ function makeRow(overrides: Partial<TaskRow> = {}): TaskRow {
     priority: "medium",
     tags: [],
     due_date: null,
+    due_at: null,
     estimated_minutes: null,
     source: "manual",
     requested_by: null,
@@ -65,12 +66,14 @@ const h = vi.hoisted(() => {
   };
 
   const parseResult: { value: unknown } = { value: null };
+  const parseMultiResult: { value: unknown } = { value: null };
 
   return {
     tableResult,
     rpcResult,
     ctxResult,
     parseResult,
+    parseMultiResult,
     insertArg,
     updateArg,
     rpcArg,
@@ -86,10 +89,17 @@ vi.mock("@/features/workspace/queries", () => ({
 
 vi.mock("../parser", () => ({
   parseTaskFromText: () => Promise.resolve(h.parseResult.value),
+  parseMultipleTasksFromText: () => Promise.resolve(h.parseMultiResult.value),
 }));
 
-const { createTask, updateTask, updateTaskStatus, deleteTask, createTaskFromText } =
-  await import("../actions");
+const {
+  createTask,
+  updateTask,
+  updateTaskStatus,
+  deleteTask,
+  createTaskFromText,
+  createMultipleTasksFromText,
+} = await import("../actions");
 
 const okCtx = {
   ok: true,
@@ -101,6 +111,7 @@ beforeEach(() => {
   h.tableResult.value = { data: null, error: null };
   h.rpcResult.value = { data: null, error: null };
   h.parseResult.value = null;
+  h.parseMultiResult.value = null;
   h.insertArg.mockReset();
   h.updateArg.mockReset();
   h.rpcArg.mockReset();
@@ -160,13 +171,32 @@ describe("createTask", () => {
     expect(payload.estimated_minutes).toBe(30);
   });
 
-  it("defaults omitted optional fields to null", async () => {
+  it("defaults description and estimate to null", async () => {
     h.tableResult.value = { data: makeRow(), error: null };
     await createTask({ title: "Bare", priority: "low", tags: [] });
     const payload = h.insertArg.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(payload.description).toBeNull();
-    expect(payload.due_date).toBeNull();
     expect(payload.estimated_minutes).toBeNull();
+  });
+
+  it("defaults a missing deadline to ~24 hours out (due_at + derived due_date)", async () => {
+    h.tableResult.value = { data: makeRow(), error: null };
+    const before = Date.now();
+    await createTask({ title: "Bare", priority: "low", tags: [] });
+    const payload = h.insertArg.mock.calls[0]?.[0] as Record<string, unknown>;
+    const dueAt = new Date(payload.due_at as string).getTime();
+    // ~24h from now (generous window for slow CI).
+    expect(dueAt).toBeGreaterThan(before + 23 * 60 * 60 * 1000);
+    expect(dueAt).toBeLessThan(before + 25 * 60 * 60 * 1000);
+    expect(payload.due_date).toBe((payload.due_at as string).slice(0, 10));
+  });
+
+  it("derives due_at end-of-day from an explicit date-only dueDate", async () => {
+    h.tableResult.value = { data: makeRow(), error: null };
+    await createTask({ title: "Dated", priority: "low", tags: [], dueDate: "2026-07-01" });
+    const payload = h.insertArg.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload.due_date).toBe("2026-07-01");
+    expect(payload.due_at).toBe("2026-07-01T23:59:59.999Z");
   });
 });
 
@@ -319,5 +349,77 @@ describe("createTaskFromText", () => {
     const result = await createTaskFromText("something");
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe("DB_ERROR");
+  });
+});
+
+describe("createMultipleTasksFromText", () => {
+  function parsedItem(overrides: Record<string, unknown> = {}) {
+    return {
+      title: "Parsed task",
+      priority: "medium",
+      tags: [],
+      dueDate: null,
+      estimatedMinutes: null,
+      status: "todo",
+      confidence: 0.9,
+      ...overrides,
+    };
+  }
+
+  it("propagates a parser error without creating", async () => {
+    h.parseMultiResult.value = { ok: false, error: { code: "AI_ERROR", message: "boom" } };
+    const result = await createMultipleTasksFromText("garbled");
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("AI_ERROR");
+    expect(h.insertArg).not.toHaveBeenCalled();
+  });
+
+  it("creates above-threshold tasks and skips low-confidence ones", async () => {
+    h.parseMultiResult.value = {
+      ok: true,
+      value: [
+        parsedItem({ title: "Keep", confidence: 0.85 }),
+        parsedItem({ title: "Drop", confidence: 0.2 }),
+      ],
+    };
+    h.tableResult.value = { data: makeRow({ title: "Keep" }), error: null };
+
+    const result = await createMultipleTasksFromText("two lines");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.created).toHaveLength(1);
+      expect(result.value.skipped).toBe(1);
+      expect(result.value.errors).toHaveLength(0);
+    }
+    expect(h.insertArg).toHaveBeenCalledTimes(1);
+    const payload = h.insertArg.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload.source).toBe("ai_parsed");
+  });
+
+  it("passes inferred status through to the insert (done sets completed_at)", async () => {
+    h.parseMultiResult.value = {
+      ok: true,
+      value: [parsedItem({ title: "Did it", status: "done", confidence: 0.95 })],
+    };
+    h.tableResult.value = { data: makeRow({ status: "done" }), error: null };
+
+    const result = await createMultipleTasksFromText("Did it - DONE");
+    expect(result.ok).toBe(true);
+    const payload = h.insertArg.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload.status).toBe("done");
+    expect(payload.completed_at).not.toBeNull();
+  });
+
+  it("collects per-task errors when an insert fails", async () => {
+    h.parseMultiResult.value = { ok: true, value: [parsedItem({ title: "Will fail" })] };
+    h.tableResult.value = { data: null, error: { message: "insert failed" } };
+
+    const result = await createMultipleTasksFromText("one line");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.created).toHaveLength(0);
+      expect(result.value.errors).toHaveLength(1);
+      expect(result.value.errors[0]).toContain("Will fail");
+    }
   });
 });

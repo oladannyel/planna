@@ -14,6 +14,7 @@ function makeRow(id: string): TaskRow {
     priority: "medium",
     tags: [],
     due_date: "2026-06-18",
+    due_at: null,
     estimated_minutes: null,
     source: "manual",
     requested_by: null,

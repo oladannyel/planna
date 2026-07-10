@@ -1,6 +1,9 @@
+"use client";
+
 import { PriorityBadge, StatusBadge } from "@/components/shared";
 import { cn } from "@/lib/cn";
 
+import { useTaskSheet } from "./TaskSheetProvider";
 import type { Task, TaskPriority } from "./types";
 
 const PRIORITY_BORDER: Record<TaskPriority, string> = {
@@ -10,11 +13,35 @@ const PRIORITY_BORDER: Record<TaskPriority, string> = {
   urgent: "border-l-danger",
 };
 
+/** Human-readable deadline: date + time when a precise dueAt exists, else the date. */
+function deadlineLabel(task: Task): string | null {
+  if (task.dueAt) {
+    const d = new Date(task.dueAt);
+    if (!Number.isNaN(d.getTime())) {
+      return d.toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    }
+  }
+  return task.dueDate;
+}
+
 export function TaskCard({ task }: { task: Task }) {
+  const { open } = useTaskSheet();
+  const deadline = deadlineLabel(task);
+
   return (
-    <article
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        open(task);
+      }}
       className={cn(
-        "relative rounded-xl border border-l-4 border-border bg-card p-3",
+        "relative block w-full rounded-xl border border-l-4 border-border bg-card p-3 text-left transition-colors hover:border-purple/60",
         PRIORITY_BORDER[task.priority],
       )}
     >
@@ -37,8 +64,8 @@ export function TaskCard({ task }: { task: Task }) {
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <PriorityBadge priority={task.priority} />
         <StatusBadge status={task.status} />
-        {task.dueDate ? <span className="text-xs text-text-muted">{task.dueDate}</span> : null}
+        {deadline ? <span className="text-xs text-text-muted">{deadline}</span> : null}
       </div>
-    </article>
+    </button>
   );
 }

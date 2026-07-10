@@ -1,92 +1,170 @@
 import { z } from "zod";
 
 import { env } from "@/lib/env";
+import { logger } from "@/lib/logger";
 import { getOpenRouter } from "@/lib/openrouter";
 import { err, ok } from "@/lib/result";
 import type { Result } from "@/lib/result";
 
 import type { ParsedTaskResult } from "./types";
 
-const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+// ─── Output schema ────────────────────────────────────────────────────────────
 
-const parsedSchema = z.object({
-  title: z.string().min(1),
+const parsedTaskSchema = z.object({
+  title: z.string().min(1).max(120),
+  description: z.string().max(500).optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]),
-  tags: z.array(z.string()),
-  dueDate: z.string().regex(ISO_DATE_RE).nullable(),
-  estimatedMinutes: z.number().int().positive().nullable(),
-  confidence: z.number(),
+  tags: z.array(z.string()).max(5),
+  dueDate: z.string().nullable(),
+  estimatedMinutes: z.number().nullable(),
+  status: z.enum(["todo", "in_progress", "done", "cancelled", "skip"]),
+  confidence: z.number().min(0).max(1),
 });
 
-function today(): string {
-  return new Date().toISOString().split("T")[0] ?? "";
-}
+const parsedBlobSchema = z.object({
+  tasks: z.array(parsedTaskSchema).min(1).max(50),
+});
 
-const SYSTEM_PROMPT = `You are a task parser. Extract structured task data from natural language input.
-Today's date: ${today()}.
-Respond ONLY with valid JSON matching this shape exactly:
+type ParsedBlob = z.infer<typeof parsedBlobSchema>;
+
+// ─── System prompt ────────────────────────────────────────────────────────────
+
+function buildSystemPrompt(): string {
+  const today = new Date().toISOString().split("T")[0] ?? "";
+  return `You are a task parser for a productivity app. The user will paste raw notes — a mix of tasks, statuses, and context — from their workday.
+
+Your job:
+1. Split the input into individual tasks
+2. Generate a SHORT clean title (max 8 words, no filler, no status markers)
+3. Generate a brief description (1-2 sentences max) expanding on what the task means — infer context if obvious
+4. Detect inline status from markers in the text:
+   - "done", "DONE", "✓", "✅", "- done" → status: "done"
+   - "in progress", "IN PROGRESS", "IN PROGGRESS" → status: "in_progress"
+   - "SKIP", "skip", "INCONSEQUENTIAL" → status: "skip" (map to cancelled)
+   - "TBD", "tbd" → status: "todo"
+   - No marker → status: "todo"
+5. Infer priority from urgency words: "urgent", "asap", "critical" → urgent; "meeting", "proposal", "client" → high; default → medium
+6. Extract tags from context (e.g. "CEAS", "Wakalead", "umrah", "corporate")
+7. Today is ${today}. Extract due dates only if explicitly mentioned.
+
+Rules:
+- NEVER copy the raw text as the title — always clean and shorten it
+- A title like "The icp config keeps reverting…." becomes "Fix ICP config revert bug"
+- A title like "Mabel account not working …DONE" becomes "Fix Mabel account issue" with status: done
+- Skip items that are clearly not tasks (pure metadata, blank lines)
+- If description is obvious from context, write it. If not, omit it.
+- Respond ONLY with valid JSON. No markdown, no preamble, no explanation.
+
+JSON shape (strict):
 {
-  "title": "clean concise task title",
-  "priority": "low" | "medium" | "high" | "urgent",
-  "tags": ["tag1", "tag2"],
-  "dueDate": "YYYY-MM-DD" | null,
-  "estimatedMinutes": number | null,
-  "confidence": 0.0-1.0
+  "tasks": [
+    {
+      "title": "short clean title",
+      "description": "optional 1-2 sentence description or omit key",
+      "priority": "low" | "medium" | "high" | "urgent",
+      "tags": ["tag1"],
+      "dueDate": "YYYY-MM-DD" | null,
+      "estimatedMinutes": number | null,
+      "status": "todo" | "in_progress" | "done" | "cancelled" | "skip",
+      "confidence": 0.0-1.0
+    }
+  ]
+}`;
 }
-No preamble, no markdown, no explanation. JSON only.`;
 
-/**
- * Pull a JSON object out of a model response: strips ```json fences and any
- * prose surrounding the object, then returns the `{...}` slice.
- */
-function extractJson(content: string): string {
-  const fenced = /```(?:json)?\s*([\s\S]*?)```/i.exec(content);
-  const body = fenced?.[1] ?? content;
-  const start = body.indexOf("{");
-  const end = body.lastIndexOf("}");
-  if (start === -1 || end === -1 || end < start) {
-    return body.trim();
+// ─── Strip markdown fences if the model wraps output ──────────────────────────
+
+function extractJson(raw: string): string {
+  const fenced = /```(?:json)?\s*([\s\S]*?)```/.exec(raw);
+  if (fenced?.[1]) return fenced[1].trim();
+  const firstBrace = raw.indexOf("{");
+  const lastBrace = raw.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    return raw.slice(firstBrace, lastBrace + 1);
   }
-  return body.slice(start, end + 1);
+  return raw.trim();
 }
 
-/** Parse free-text into a structured task via the OpenRouter free model. */
-export async function parseTaskFromText(rawText: string): Promise<Result<ParsedTaskResult>> {
+// ─── Map internal blob schema → ParsedTaskResult[] ────────────────────────────
+
+function mapParsedBlob(blob: ParsedBlob): ParsedTaskResult[] {
+  return blob.tasks
+    .filter((t) => t.status !== "skip") // skip / inconsequential → don't create a task
+    .map((t) => ({
+      title: t.title,
+      ...(t.description !== undefined ? { description: t.description } : {}),
+      priority: t.priority,
+      tags: t.tags,
+      dueDate: t.dueDate,
+      estimatedMinutes: t.estimatedMinutes,
+      status: t.status === "skip" ? "cancelled" : t.status,
+      confidence: t.confidence,
+    }));
+}
+
+// ─── Parse a multi-task blob — primary export ─────────────────────────────────
+
+export async function parseMultipleTasksFromText(
+  rawText: string,
+): Promise<Result<ParsedTaskResult[]>> {
+  const trimmed = rawText.trim();
+  if (!trimmed) {
+    return err({ code: "VALIDATION_ERROR", message: "Input is empty" });
+  }
+
+  let raw = "";
   try {
     const response = await getOpenRouter().chat.completions.create({
       model: env.OPENROUTER_FREE_MODEL,
-      max_tokens: 300,
+      max_tokens: 2000,
       temperature: 0.1,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: rawText },
+        { role: "system", content: buildSystemPrompt() },
+        { role: "user", content: trimmed },
       ],
     });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
+    raw = response.choices[0]?.message?.content ?? "";
+    if (!raw) {
       return err({ code: "AI_ERROR", message: "Empty response from AI parser" });
     }
 
     let parsed: unknown;
     try {
-      parsed = JSON.parse(extractJson(content));
+      parsed = JSON.parse(extractJson(raw));
     } catch {
       return err({ code: "AI_ERROR", message: "AI returned non-JSON output" });
     }
 
-    const validated = parsedSchema.safeParse(parsed);
+    const validated = parsedBlobSchema.safeParse(parsed);
     if (!validated.success) {
+      logger.error("Parser schema validation failed", {
+        errors: validated.error.flatten(),
+        raw: extractJson(raw).slice(0, 300),
+      });
       return err({
         code: "VALIDATION_ERROR",
-        message: "AI returned invalid structure",
+        message: "AI returned unexpected structure",
         fields: validated.error.flatten().fieldErrors,
       });
     }
 
-    const confidence = Math.min(1, Math.max(0, validated.data.confidence));
-    return ok({ ...validated.data, confidence });
+    return ok(mapParsedBlob(validated.data));
   } catch (cause) {
-    return err({ code: "AI_ERROR", message: "Task parsing failed", cause });
+    logger.error("Task parsing failed", { cause, raw: raw.slice(0, 300) });
+    return err({ code: "AI_ERROR", message: "Task parsing failed" });
   }
+}
+
+// ─── Single-task parse (back-compat wrapper) ──────────────────────────────────
+
+export async function parseTaskFromText(rawText: string): Promise<Result<ParsedTaskResult>> {
+  const result = await parseMultipleTasksFromText(rawText);
+  if (!result.ok) return result;
+
+  const first = result.value[0];
+  if (!first) {
+    return err({ code: "VALIDATION_ERROR", message: "No tasks found in input" });
+  }
+  return ok(first);
 }

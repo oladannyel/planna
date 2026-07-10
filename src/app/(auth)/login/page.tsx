@@ -17,18 +17,6 @@ export default function LoginPage() {
   const redirectTo =
     typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined;
 
-  async function signInWithGoogle(): Promise<void> {
-    setStatus({ kind: "loading" });
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      ...(redirectTo ? { options: { redirectTo } } : {}),
-    });
-    if (error) {
-      setStatus({ kind: "error", message: error.message });
-    }
-  }
-
   async function signInWithMagicLink(): Promise<void> {
     setStatus({ kind: "loading" });
     const supabase = createClient();
@@ -48,27 +36,12 @@ export default function LoginPage() {
         Plan, execute, and reflect — with a little AI.
       </p>
 
-      <button
-        type="button"
-        onClick={() => void signInWithGoogle()}
-        disabled={isLoading}
-        className="mt-6 w-full rounded-xl bg-purple px-4 py-2.5 font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-      >
-        Continue with Google
-      </button>
-
-      <div className="my-6 flex items-center gap-3 text-xs uppercase text-text-muted">
-        <span className="h-px flex-1 bg-border" />
-        or
-        <span className="h-px flex-1 bg-border" />
-      </div>
-
       <form
         onSubmit={(event) => {
           event.preventDefault();
           void signInWithMagicLink();
         }}
-        className="space-y-3"
+        className="mt-6 space-y-3"
       >
         <label htmlFor="email" className="block text-sm text-text-secondary">
           Email
@@ -85,9 +58,9 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isLoading || email.length === 0}
-          className="w-full rounded-xl border border-border px-4 py-2.5 font-medium transition-colors hover:bg-white/5 disabled:opacity-50"
+          className="w-full rounded-xl bg-purple px-4 py-2.5 font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          Send magic link
+          {isLoading ? "Sending…" : "Send magic link"}
         </button>
       </form>
 

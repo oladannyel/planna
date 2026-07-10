@@ -32,7 +32,7 @@ export async function getAuthedContext(): Promise<Result<AuthedContext>> {
     .maybeSingle();
 
   if (error) {
-    return err({ code: "DB_ERROR", message: error.message, cause: error });
+    return err({ code: "DB_ERROR", message: error.message });
   }
 
   if (!workspace) {

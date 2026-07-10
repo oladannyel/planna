@@ -23,7 +23,7 @@ export async function getWeeklyReport(
     .maybeSingle();
 
   if (error) {
-    return err({ code: "DB_ERROR", message: error.message, cause: error });
+    return err({ code: "DB_ERROR", message: error.message });
   }
 
   return ok(data ? { narrative: data.narrative, createdAt: data.created_at } : null);

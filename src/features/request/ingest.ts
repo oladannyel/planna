@@ -22,7 +22,7 @@ export async function ingestRequest(
     .maybeSingle();
 
   if (wsError) {
-    return err({ code: "DB_ERROR", message: wsError.message, cause: wsError });
+    return err({ code: "DB_ERROR", message: wsError.message });
   }
   if (!workspace) {
     return err({ code: "NOT_FOUND", message: "Workspace not found" });
@@ -54,7 +54,7 @@ export async function ingestRequest(
     .single();
 
   if (error) {
-    return err({ code: "DB_ERROR", message: error.message, cause: error });
+    return err({ code: "DB_ERROR", message: error.message });
   }
 
   return ok({ taskId: data.id });

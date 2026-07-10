@@ -14,6 +14,7 @@ function makeRow(overrides: Partial<TaskRow> = {}): TaskRow {
     priority: "medium",
     tags: ["x"],
     due_date: "2026-06-10",
+    due_at: null,
     estimated_minutes: null,
     source: "manual",
     requested_by: null,

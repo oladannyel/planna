@@ -11,3 +11,4 @@ export { requestInputSchema, taskInputSchema } from "./schema";
 export type { RequestInputSchema, TaskInputSchema } from "./schema";
 export { rowToTask } from "./mappers";
 export { detectCarryovers, sortDailyTasks } from "./carryover";
+export { TaskSheetProvider, useTaskSheet } from "./TaskSheetProvider";

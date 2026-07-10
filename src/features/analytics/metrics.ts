@@ -26,7 +26,8 @@ export interface InsightStats {
   completionRate: number; // 0–100
   carryoverRate: number; // 0–100
   avgCycleTimeHours: number;
-  onTimeRate: number; // 0–100
+  onTimeRate: number; // 0–100, among completed tasks that had a deadline
+  scheduledRate: number; // 0–100, share of tasks that have a deadline
   topTags: TagCount[];
 }
 
@@ -39,12 +40,24 @@ function isDone(task: Task): boolean {
   return task.status === "done";
 }
 
-/** A completed task counts as on-time if it finished by end of its due date. */
+/** The task's deadline as an epoch ms, preferring the precise dueAt over date-only dueDate. */
+function deadlineMs(task: Task): number | null {
+  if (task.dueAt) return parseISO(task.dueAt).getTime();
+  if (task.dueDate) return parseISO(`${task.dueDate}T23:59:59.999Z`).getTime();
+  return null;
+}
+
+/** Whether a task has any deadline set. */
+function hasDeadline(task: Task): boolean {
+  return Boolean(task.dueAt) || Boolean(task.dueDate);
+}
+
+/** A completed task counts as on-time if it finished by its deadline. */
 export function isOnTime(task: Task): boolean {
-  if (!isDone(task) || task.dueDate === null || task.completedAt === null) return false;
-  const completed = parseISO(task.completedAt).getTime();
-  const deadline = parseISO(`${task.dueDate}T23:59:59.999Z`).getTime();
-  return completed <= deadline;
+  if (!isDone(task) || !task.completedAt) return false;
+  const deadline = deadlineMs(task);
+  if (deadline === null) return false;
+  return parseISO(task.completedAt).getTime() <= deadline;
 }
 
 export function completionRate(tasks: Task[]): number {
@@ -55,9 +68,19 @@ export function carryoverRate(tasks: Task[]): number {
   return pct(tasks.filter((task) => task.carriedOver).length, tasks.length);
 }
 
+/**
+ * On-time rate among completed tasks *that had a deadline*. Tasks completed with
+ * no deadline are excluded from the denominator rather than counted as late, so
+ * the figure reflects scheduling discipline instead of the absence of due dates.
+ */
 export function onTimeRate(tasks: Task[]): number {
-  const completed = tasks.filter(isDone);
-  return pct(completed.filter(isOnTime).length, completed.length);
+  const scheduledCompleted = tasks.filter((task) => isDone(task) && hasDeadline(task));
+  return pct(scheduledCompleted.filter(isOnTime).length, scheduledCompleted.length);
+}
+
+/** Share of tasks that have a deadline set — surfaces how much work is actually scheduled. */
+export function scheduledRate(tasks: Task[]): number {
+  return pct(tasks.filter(hasDeadline).length, tasks.length);
 }
 
 /** Mean hours from creation to completion across done tasks, 1 decimal. */
@@ -148,6 +171,7 @@ export function monthlyStats(tasks: Task[]): InsightStats {
     carryoverRate: carryoverRate(tasks),
     avgCycleTimeHours: avgCycleTimeHours(tasks),
     onTimeRate: onTimeRate(tasks),
+    scheduledRate: scheduledRate(tasks),
     topTags: topTags(tasks),
   };
 }
