@@ -24,8 +24,8 @@ describe("env", () => {
     const { env } = await import("../env");
     expect(env.NEXT_PUBLIC_SUPABASE_URL).toBe("https://example.supabase.co");
     expect(env.OPENROUTER_BASE_URL).toBe("https://openrouter.ai/api/v1");
-    expect(env.OPENROUTER_FREE_MODEL).toBe("openai/gpt-oss-20b:free");
-    expect(env.OPENROUTER_REPORT_MODEL).toBe("openai/gpt-oss-120b:free");
+    expect(env.OPENROUTER_FREE_MODEL).toBe("nvidia/nemotron-nano-9b-v2:free");
+    expect(env.OPENROUTER_REPORT_MODEL).toBe("nvidia/nemotron-nano-9b-v2:free");
   });
 
   it("respects an explicit OPENROUTER_BASE_URL override", async () => {

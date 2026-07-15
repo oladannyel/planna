@@ -15,8 +15,10 @@ const parsedTaskSchema = z.object({
   description: z.string().max(500).optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]),
   tags: z.array(z.string()).max(5),
-  dueDate: z.string().nullable(),
-  estimatedMinutes: z.number().nullable(),
+  // Models vary on whether they emit explicit null keys or omit them entirely
+  // (e.g. nvidia/nemotron drops null fields). Accept both — missing → null.
+  dueDate: z.string().nullable().optional().default(null),
+  estimatedMinutes: z.number().nullable().optional().default(null),
   status: z.enum(["todo", "in_progress", "done", "cancelled", "skip"]),
   confidence: z.number().min(0).max(1),
 });

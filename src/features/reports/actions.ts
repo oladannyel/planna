@@ -79,7 +79,7 @@ export async function generateWeeklyReport(weekStart: string): Promise<Result<We
   try {
     const response = await getOpenRouter().chat.completions.create({
       model: env.OPENROUTER_REPORT_MODEL,
-      max_tokens: 400,
+      max_tokens: 1500,
       temperature: 0.4,
       messages: [{ role: "user", content: buildPrompt(weekStart, stats) }],
     });

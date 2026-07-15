@@ -42,6 +42,27 @@ describe("parseMultipleTasksFromText — golden dataset", () => {
     expect(result.value[0]?.title).toBe("Fix ICP config revert bug");
   });
 
+  it("tolerates a model that omits null dueDate/estimatedMinutes keys", async () => {
+    // Some models (e.g. nvidia/nemotron) drop null-valued keys entirely rather
+    // than emitting `null`. The schema must treat missing → null, not reject.
+    mockResponse([
+      {
+        title: "Integrate Apify",
+        priority: "medium",
+        tags: ["apify"],
+        status: "todo",
+        confidence: 0.8,
+      },
+    ]);
+
+    const result = await parseMultipleTasksFromText("integrate apify");
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value).toHaveLength(1);
+    expect(result.value[0]?.dueDate).toBeNull();
+    expect(result.value[0]?.estimatedMinutes).toBeNull();
+  });
+
   it("detects DONE status from inline marker", async () => {
     mockResponse([
       {

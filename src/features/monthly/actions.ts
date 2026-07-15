@@ -88,7 +88,7 @@ export async function generateMonthlySummary(
   try {
     const response = await getOpenRouter().chat.completions.create({
       model: env.OPENROUTER_REPORT_MODEL,
-      max_tokens: 600,
+      max_tokens: 1500,
       temperature: 0.4,
       messages: [{ role: "user", content: buildPrompt(year, month, stats) }],
     });
