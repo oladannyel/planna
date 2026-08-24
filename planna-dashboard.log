@@ -1,0 +1,19 @@
+ ⨯ Failed to start server
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:1941:16)
+    at listenInCluster (node:net:1998:12)
+    at Server.listen (node:net:2103:7)
+    at /Users/daniel.olaniyan/plAnna/node_modules/.pnpm/next@14.2.35_@babel+core@7.29.7_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/server/lib/start-server.js:280:16
+    at new Promise (<anonymous>)
+    at startServer (/Users/daniel.olaniyan/plAnna/node_modules/.pnpm/next@14.2.35_@babel+core@7.29.7_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/server/lib/start-server.js:191:11)
+    at /Users/daniel.olaniyan/plAnna/node_modules/.pnpm/next@14.2.35_@babel+core@7.29.7_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/server/lib/start-server.js:310:52
+    at Span.traceAsyncFn (/Users/daniel.olaniyan/plAnna/node_modules/.pnpm/next@14.2.35_@babel+core@7.29.7_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/trace/trace.js:154:26)
+    at process.<anonymous> (/Users/daniel.olaniyan/plAnna/node_modules/.pnpm/next@14.2.35_@babel+core@7.29.7_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/server/lib/start-server.js:310:35)
+    at process.emit (node:events:519:28) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
+[?25h

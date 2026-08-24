@@ -1,6 +1,7 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
+import Link from "next/link";
 
 import type { Task, TaskStatus } from "@/features/tasks/types";
 import { cn } from "@/lib/cn";
@@ -11,10 +12,15 @@ interface KanbanColumnProps {
   status: TaskStatus;
   label: string;
   tasks: Task[];
+  /** Cap how many cards render inline; the rest are reachable via `archiveHref`. */
+  maxVisible?: number;
+  archiveHref?: string;
 }
 
-export function KanbanColumn({ status, label, tasks }: KanbanColumnProps) {
+export function KanbanColumn({ status, label, tasks, maxVisible, archiveHref }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
+  const visibleTasks = maxVisible ? tasks.slice(0, maxVisible) : tasks;
+  const hiddenCount = tasks.length - visibleTasks.length;
 
   return (
     <section
@@ -32,10 +38,18 @@ export function KanbanColumn({ status, label, tasks }: KanbanColumnProps) {
       </header>
 
       <div className="flex flex-col gap-2 p-2">
-        {tasks.map((task) => (
+        {visibleTasks.map((task) => (
           <DraggableTaskCard key={task.id} task={task} />
         ))}
         {tasks.length === 0 ? <p className="px-1 py-4 text-xs text-text-muted">No tasks</p> : null}
+        {hiddenCount > 0 && archiveHref ? (
+          <Link
+            href={archiveHref}
+            className="rounded-lg border border-dashed border-border px-2 py-2 text-center text-xs text-text-secondary hover:border-purple/60 hover:text-purple"
+          >
+            View all {tasks.length} →
+          </Link>
+        ) : null}
       </div>
     </section>
   );

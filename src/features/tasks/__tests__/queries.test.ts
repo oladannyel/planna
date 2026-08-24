@@ -28,13 +28,13 @@ function makeRow(id: string): TaskRow {
 }
 
 const h = vi.hoisted(() => {
-  const tableResult: { value: { data: unknown; error: unknown } } = {
+  const tableResult: { value: { data: unknown; error: unknown; count?: number | null } } = {
     value: { data: null, error: null },
   };
   const ctxResult: { value: unknown } = { value: null };
 
   const builder: Record<string, unknown> = {};
-  for (const m of ["select", "eq", "gte", "lte", "order"]) {
+  for (const m of ["select", "eq", "gte", "lte", "order", "ilike", "range"]) {
     builder[m] = () => builder;
   }
   builder.maybeSingle = () => Promise.resolve(tableResult.value);
@@ -48,7 +48,7 @@ vi.mock("@/features/workspace/queries", () => ({
   getAuthedContext: () => Promise.resolve(h.ctxResult.value),
 }));
 
-const { getTasks, getTaskById, getTasksInRange } = await import("../queries");
+const { getTasks, getTaskById, getTasksInRange, getTasksByStatus } = await import("../queries");
 
 beforeEach(() => {
   h.ctxResult.value = {
@@ -109,6 +109,39 @@ describe("getTaskById", () => {
   it("propagates context errors", async () => {
     h.ctxResult.value = { ok: false, error: { code: "UNAUTHORIZED", message: "no" } };
     const result = await getTaskById("x");
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("UNAUTHORIZED");
+  });
+});
+
+describe("getTasksByStatus", () => {
+  it("returns a page of tasks plus the total count", async () => {
+    h.tableResult.value = { data: [makeRow("a"), makeRow("b")], error: null, count: 5 };
+    const result = await getTasksByStatus("done");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.tasks).toHaveLength(2);
+      expect(result.value.total).toBe(5);
+    }
+  });
+
+  it("defaults total to 0 when count is missing", async () => {
+    h.tableResult.value = { data: [], error: null, count: null };
+    const result = await getTasksByStatus("done");
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.total).toBe(0);
+  });
+
+  it("returns DB_ERROR on query failure", async () => {
+    h.tableResult.value = { data: null, error: { message: "archive boom" } };
+    const result = await getTasksByStatus("done");
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("DB_ERROR");
+  });
+
+  it("propagates context errors", async () => {
+    h.ctxResult.value = { ok: false, error: { code: "UNAUTHORIZED", message: "no" } };
+    const result = await getTasksByStatus("done");
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe("UNAUTHORIZED");
   });

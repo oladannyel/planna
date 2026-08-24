@@ -55,4 +55,48 @@ describe("KanbanBoard", () => {
     render(<KanbanBoard initialTasks={[]} />);
     expect(screen.getAllByText("No tasks")).toHaveLength(4);
   });
+
+  it("caps the Done column and links to its own archive once it exceeds the preview limit", () => {
+    const doneTasks = Array.from({ length: 10 }, (_, i) => makeTask(`d${i}`, "done"));
+    render(<KanbanBoard initialTasks={doneTasks} />);
+
+    // Count badge reflects the true total...
+    expect(screen.getByText("10")).toBeInTheDocument();
+    // ...but only the preview limit of cards is actually rendered.
+    expect(screen.getAllByText(/^Task d/)).toHaveLength(8);
+    expect(screen.getByRole("link", { name: "View all 10 →" })).toHaveAttribute(
+      "href",
+      "/board/archive/done",
+    );
+  });
+
+  it("caps the Cancelled column and links to its own archive once it exceeds the preview limit", () => {
+    const cancelledTasks = Array.from({ length: 23 }, (_, i) => makeTask(`c${i}`, "cancelled"));
+    render(<KanbanBoard initialTasks={cancelledTasks} />);
+
+    expect(screen.getByText("23")).toBeInTheDocument();
+    expect(screen.getAllByText(/^Task c/)).toHaveLength(8);
+    expect(screen.getByRole("link", { name: "View all 23 →" })).toHaveAttribute(
+      "href",
+      "/board/archive/cancelled",
+    );
+  });
+
+  it("caps To do and In progress too once they exceed the preview limit", () => {
+    const todoTasks = Array.from({ length: 9 }, (_, i) => makeTask(`t${i}`, "todo"));
+    render(<KanbanBoard initialTasks={todoTasks} />);
+
+    expect(screen.getByText("9")).toBeInTheDocument();
+    expect(screen.getAllByText(/^Task t/)).toHaveLength(8);
+    expect(screen.getByRole("link", { name: "View all 9 →" })).toHaveAttribute(
+      "href",
+      "/board/archive/todo",
+    );
+  });
+
+  it("does not show an archive link when a column is within the preview limit", () => {
+    const doneTasks = Array.from({ length: 3 }, (_, i) => makeTask(`d${i}`, "done"));
+    render(<KanbanBoard initialTasks={doneTasks} />);
+    expect(screen.queryByRole("link", { name: /View all/ })).not.toBeInTheDocument();
+  });
 });
