@@ -7,6 +7,7 @@ import type { InsightStats } from "@/features/analytics/metrics";
 import { monthlyStats } from "@/features/analytics/metrics";
 import { generateMonthlySummary } from "@/features/monthly/actions";
 import type { MonthlySummaryResult } from "@/features/monthly/actions";
+import { TASK_COLUMNS } from "@/features/tasks/columns";
 import { rowToTask } from "@/features/tasks/mappers";
 import { getAuthedContext } from "@/features/workspace/queries";
 import { env } from "@/lib/env";
@@ -59,7 +60,7 @@ export async function generateWeeklyReport(weekStart: string): Promise<Result<We
   const start = parseISO(weekStart);
   const { data, error } = await ctx.value.supabase
     .from("tasks")
-    .select("*")
+    .select(TASK_COLUMNS)
     .eq("workspace_id", ctx.value.workspaceId)
     .gte("created_at", start.toISOString())
     .lte("created_at", endOfDay(addDays(start, 6)).toISOString());

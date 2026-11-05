@@ -31,7 +31,7 @@ export async function addQuestion(question: string): Promise<Result<EthicsQuesti
   const { data, error } = await ctx.value.supabase
     .from("ethics_questions")
     .insert({ workspace_id: ctx.value.workspaceId, question: validated.data.question })
-    .select("*")
+    .select("id, workspace_id, question, sort_order, active, created_at")
     .single();
 
   if (error) {
@@ -63,7 +63,7 @@ export async function updateQuestion(
     .update({ question: validated.data.question })
     .eq("workspace_id", ctx.value.workspaceId)
     .eq("id", id)
-    .select("*")
+    .select("id, workspace_id, question, sort_order, active, created_at")
     .single();
 
   if (error) {

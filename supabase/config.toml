@@ -391,8 +391,12 @@ deno_version = 2
 # secret_key = "env(SECRET_VALUE)"
 
 [analytics]
-enabled = true
-port = 54327
+# Disabled for local development. plAnna does not use Supabase's Logflare
+# analytics stack, and its analytics/vector containers are the slowest and
+# least reliable part of `supabase start`. Turning them off makes a fresh
+# clone come up faster and more predictably.
+enabled = false
+port = 54427
 # Configure one of the supported backends: `postgres`, `bigquery`.
 backend = "postgres"
 

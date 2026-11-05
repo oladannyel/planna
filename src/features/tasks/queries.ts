@@ -2,6 +2,7 @@ import { getAuthedContext } from "@/features/workspace/queries";
 import { err, ok } from "@/lib/result";
 import type { Result } from "@/lib/result";
 
+import { TASK_COLUMNS } from "./columns";
 import { rowToTask } from "./mappers";
 import type { Task, TaskStatus } from "./types";
 
@@ -12,7 +13,7 @@ export async function getTasks(): Promise<Result<Task[]>> {
 
   const { data, error } = await ctx.value.supabase
     .from("tasks")
-    .select("*")
+    .select(TASK_COLUMNS)
     .eq("workspace_id", ctx.value.workspaceId)
     .order("created_at", { ascending: false });
 
@@ -30,7 +31,7 @@ export async function getTaskById(taskId: string): Promise<Result<Task>> {
 
   const { data, error } = await ctx.value.supabase
     .from("tasks")
-    .select("*")
+    .select(TASK_COLUMNS)
     .eq("workspace_id", ctx.value.workspaceId)
     .eq("id", taskId)
     .maybeSingle();
@@ -98,7 +99,7 @@ export async function getTasksInRange(start: string, end: string): Promise<Resul
 
   const { data, error } = await ctx.value.supabase
     .from("tasks")
-    .select("*")
+    .select(TASK_COLUMNS)
     .eq("workspace_id", ctx.value.workspaceId)
     .gte("due_date", start)
     .lte("due_date", end)

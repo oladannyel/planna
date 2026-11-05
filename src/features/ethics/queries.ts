@@ -11,7 +11,7 @@ async function listQuestions(activeOnly: boolean): Promise<Result<EthicsQuestion
 
   let query = ctx.value.supabase
     .from("ethics_questions")
-    .select("*")
+    .select("id, workspace_id, question, sort_order, active, created_at")
     .eq("workspace_id", ctx.value.workspaceId);
   if (activeOnly) query = query.eq("active", true);
 
