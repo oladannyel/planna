@@ -151,3 +151,5 @@ To report a security issue, please follow [SECURITY.md](SECURITY.md) rather than
 ## License
 
 [MIT](LICENSE) © Daniel Olaniyan — use it, fork it, change it to fit how you work.
+
+plAnna's design system is adapted from [TailAdmin](https://github.com/TailAdmin/free-nextjs-admin-dashboard) (MIT, © 2023 TailAdmin). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
