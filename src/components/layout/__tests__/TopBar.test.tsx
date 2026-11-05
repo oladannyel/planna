@@ -3,14 +3,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ThemeProvider } from "@/components/theme";
 
+import { SidebarProvider } from "../SidebarProvider";
 import { TopBar } from "../TopBar";
 
-// TopBar renders the theme toggle, which reads theme context, so these render
-// inside the provider. jsdom has no matchMedia, which the provider needs.
+// TopBar reads both theme and sidebar context (the theme toggle and the
+// mobile nav button), so it renders inside both providers. jsdom has no
+// matchMedia, which ThemeProvider needs.
 function renderTopBar(email = "dan@planna.com") {
   return render(
     <ThemeProvider>
-      <TopBar email={email} />
+      <SidebarProvider>
+        <TopBar email={email} />
+      </SidebarProvider>
     </ThemeProvider>,
   );
 }
@@ -49,5 +53,15 @@ describe("TopBar", () => {
   it("offers the theme toggle", async () => {
     renderTopBar();
     expect(await screen.findByRole("button", { name: /switch to .* mode/i })).toBeInTheDocument();
+  });
+
+  it("offers a search field", () => {
+    renderTopBar();
+    expect(screen.getByRole("searchbox", { name: "Search tasks" })).toBeInTheDocument();
+  });
+
+  it("exposes the mobile navigation trigger", () => {
+    renderTopBar();
+    expect(screen.getByRole("button", { name: "Open navigation" })).toBeInTheDocument();
   });
 });

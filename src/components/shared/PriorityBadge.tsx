@@ -1,12 +1,13 @@
 import type { TaskPriority } from "@/features/tasks/types";
 
+import type { BadgeTone } from "./Badge";
 import { Badge } from "./Badge";
 
-const STYLES: Record<TaskPriority, string> = {
-  low: "bg-text-muted/20 text-text-secondary",
-  medium: "bg-purple/20 text-purple",
-  high: "bg-amber/20 text-amber",
-  urgent: "bg-danger/20 text-danger",
+const TONES: Record<TaskPriority, BadgeTone> = {
+  low: "neutral",
+  medium: "brand",
+  high: "warning",
+  urgent: "danger",
 };
 
 const LABELS: Record<TaskPriority, string> = {
@@ -17,5 +18,5 @@ const LABELS: Record<TaskPriority, string> = {
 };
 
 export function PriorityBadge({ priority }: { priority: TaskPriority }) {
-  return <Badge className={STYLES[priority]}>{LABELS[priority]}</Badge>;
+  return <Badge tone={TONES[priority]}>{LABELS[priority]}</Badge>;
 }
