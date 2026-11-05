@@ -47,7 +47,8 @@ parser_fix.md
 task-scheduling-plan.md
 PLANNA_BUILD_SPEC.md
 
-# TailAdmin reference clone (to be extracted to its own repo)
+# TailAdmin reference clone, if one is checked out here again
+# (the design system was ported from it; see THIRD_PARTY_NOTICES.md)
 free-nextjs-admin-dashboard/
 
 # UI redesign planning docs (local tracking, untracked per D2)

@@ -152,7 +152,7 @@ export function RequestForm({ slug }: { slug: string }) {
         </div>
       </div>
 
-      {error ? <p className="text-sm text-danger">{error}</p> : null}
+      {error ? <p className="text-sm text-danger-ink">{error}</p> : null}
 
       <Button type="submit" disabled={busy} className="w-full">
         {busy ? "Submitting…" : "Submit request"}

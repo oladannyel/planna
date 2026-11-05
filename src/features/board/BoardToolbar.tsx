@@ -50,7 +50,7 @@ export function BoardToolbar({
                 "inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple",
                 isActive
-                  ? "bg-purple/15 text-purple"
+                  ? "bg-purple/15 text-purple-ink"
                   : "text-text-secondary hover:bg-card-hover hover:text-text-primary",
               )}
             >
@@ -58,7 +58,7 @@ export function BoardToolbar({
               <span
                 className={cn(
                   "rounded-full px-1.5 py-0.5 text-xs",
-                  isActive ? "bg-purple/20 text-purple" : "bg-text-muted/15 text-text-muted",
+                  isActive ? "bg-purple/20 text-purple-ink" : "bg-text-muted/15 text-text-muted",
                 )}
               >
                 {tab.count}

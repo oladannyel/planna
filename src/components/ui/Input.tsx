@@ -49,14 +49,14 @@ export function Field({
       <label htmlFor={id} className="block text-sm font-medium text-text-secondary">
         {label}
         {required ? (
-          <span className="ms-0.5 text-danger" aria-hidden>
+          <span className="ms-0.5 text-danger-ink" aria-hidden>
             *
           </span>
         ) : null}
       </label>
       <div aria-describedby={describedBy}>{children}</div>
       {error ? (
-        <p id={`${id}-error`} className="text-sm text-danger">
+        <p id={`${id}-error`} className="text-sm text-danger-ink">
           {error}
         </p>
       ) : hint ? (

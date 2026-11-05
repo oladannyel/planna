@@ -63,7 +63,7 @@ export function MonthlySummary({ year, month, hasTasks, initialNarrative }: Mont
         <p className="text-sm text-text-muted">No summary generated yet.</p>
       )}
 
-      {error !== null ? <p className="text-sm text-danger">{error}</p> : null}
+      {error !== null ? <p className="text-sm text-danger-ink">{error}</p> : null}
     </div>
   );
 }

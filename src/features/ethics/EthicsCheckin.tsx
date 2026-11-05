@@ -74,7 +74,7 @@ export function EthicsCheckin({ weekStart, questions, initialAnswers }: EthicsCh
           {busy ? "Saving…" : "Save reflection"}
         </Button>
         {saved ? <span className="text-sm text-teal">Saved.</span> : null}
-        {error !== null ? <span className="text-sm text-danger">{error}</span> : null}
+        {error !== null ? <span className="text-sm text-danger-ink">{error}</span> : null}
       </div>
     </div>
   );

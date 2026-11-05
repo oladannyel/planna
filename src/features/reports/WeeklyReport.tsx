@@ -61,7 +61,7 @@ export function WeeklyReport({ weekStart, hasTasks, initialNarrative }: WeeklyRe
         <p className="text-sm text-text-muted">No report generated yet.</p>
       )}
 
-      {error !== null ? <p className="text-sm text-danger">{error}</p> : null}
+      {error !== null ? <p className="text-sm text-danger-ink">{error}</p> : null}
     </div>
   );
 }

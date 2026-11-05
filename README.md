@@ -27,6 +27,25 @@ It was built for one person's daily work across many parallel projects. It gener
 | **Ethics check-in**          | A configurable reflection prompt set — the part of the tool that asks questions back.                                                                                                    |
 | **Request links**            | A public `/request/[slug]` link so colleagues can file a task into your board without an account.                                                                                        |
 
+## Design system
+
+plAnna is dark by default with a full light theme, both driven from one set of
+tokens in [`tailwind.config.ts`](tailwind.config.ts) and
+[`src/app/globals.css`](src/app/globals.css).
+
+- **Semantic tokens** (`canvas`, `card`, `border`, `text-*`, accents) resolve
+  through CSS custom properties, so a single utility class renders correctly in
+  either theme. They hold raw RGB channels rather than hex, which is what keeps
+  Tailwind's opacity modifiers (`bg-purple/15`) working.
+- **No flash on load.** A small script in `<head>` applies the stored theme
+  before first paint — React mounts too late to do this.
+- **Contrast is tested, not eyeballed.** Every foreground/surface pair is
+  asserted against WCAG AA in `src/lib/__tests__/contrast.test.ts`, in both
+  themes. A token change that drops below 4.5:1 fails the suite.
+- **Charts read the same tokens.** Recharts takes colours as props and cannot
+  see Tailwind classes, so `useChartPalette()` reads the live custom properties
+  instead of duplicating the palette as hex.
+
 ## Tech stack
 
 - **[Next.js 14](https://nextjs.org)** (App Router, Server Actions, React Server Components)
@@ -34,7 +53,7 @@ It was built for one person's daily work across many parallel projects. It gener
 - **[Supabase](https://supabase.com)** — Postgres, Auth (Google OAuth), and Row Level Security on every table
 - **[Tailwind CSS](https://tailwindcss.com)** + **[Radix UI](https://www.radix-ui.com)** primitives
 - **[OpenRouter](https://openrouter.ai)** for language-model calls (configured for free-tier models)
-- **[Vitest](https://vitest.dev)** + Testing Library + MSW — 324 tests
+- **[Vitest](https://vitest.dev)** + Testing Library + MSW — 429 tests
 - **[Recharts](https://recharts.org)** for analytics, **[dnd-kit](https://dndkit.com)** for the board
 
 ## Quick start
@@ -99,6 +118,21 @@ Open <http://localhost:3000>.
 | `pnpm test`       | Full suite with coverage        |
 | `pnpm test:watch` | Tests in watch mode             |
 | `pnpm format`     | Prettier across the repo        |
+
+### Local Supabase
+
+`supabase start` brings up Postgres, Auth, Studio and a mail catcher locally,
+applies every migration and seeds a demo workspace — no hosted project and no
+egress limits needed:
+
+```bash
+supabase start          # first run pulls container images
+supabase db reset       # replay migrations + seed
+```
+
+It runs on `544xx` ports rather than Supabase's `543xx` defaults, so it
+coexists with other local Supabase projects. Sign in as `demo@planna.local`
+and collect the magic link from the mail catcher at <http://127.0.0.1:54424>.
 
 All four gates — typecheck, lint, test, build — must pass before anything merges. A Husky pre-commit hook runs lint-staged locally, and [CI](.github/workflows/ci.yml) enforces the same on every push and pull request.
 

@@ -36,6 +36,9 @@ const config: Config = {
 
         // ─── Accents (theme-aware for contrast) ────────────────────────────
         purple: semantic("--color-purple"),
+        // Accent-as-text variants; see globals.css for why these are separate.
+        "purple-ink": semantic("--color-purple-ink"),
+        "danger-ink": semantic("--color-danger-ink"),
         teal: semantic("--color-teal"),
         amber: semantic("--color-amber"),
         danger: semantic("--color-danger"),

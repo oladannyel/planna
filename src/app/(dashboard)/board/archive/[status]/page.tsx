@@ -63,7 +63,7 @@ export default async function StatusArchivePage({
         />
         <button
           type="submit"
-          className="rounded-lg border border-border px-3 py-2 text-sm text-text-secondary hover:border-purple/60 hover:text-purple"
+          className="rounded-lg border border-border px-3 py-2 text-sm text-text-secondary hover:border-purple/60 hover:text-purple-ink"
         >
           Search
         </button>
@@ -85,7 +85,10 @@ export default async function StatusArchivePage({
       {totalPages > 1 ? (
         <div className="flex items-center justify-center gap-4 text-sm">
           {page > 1 ? (
-            <Link href={pageHref(status, search, page - 1)} className="text-purple hover:underline">
+            <Link
+              href={pageHref(status, search, page - 1)}
+              className="text-purple-ink hover:underline"
+            >
               ← Prev
             </Link>
           ) : (
@@ -95,7 +98,10 @@ export default async function StatusArchivePage({
             Page {page} of {totalPages}
           </span>
           {page < totalPages ? (
-            <Link href={pageHref(status, search, page + 1)} className="text-purple hover:underline">
+            <Link
+              href={pageHref(status, search, page + 1)}
+              className="text-purple-ink hover:underline"
+            >
               Next →
             </Link>
           ) : (

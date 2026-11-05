@@ -224,12 +224,12 @@ export function TaskDetailSheet({ task, onClose }: { task: Task; onClose: () => 
           />
         </label>
 
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
+        {error ? <p className="text-sm text-danger-ink">{error}</p> : null}
 
         <div className="mt-auto flex items-center justify-between pt-2">
           <Button
             variant="ghost"
-            className="text-danger"
+            className="text-danger-ink"
             onClick={() => void remove()}
             disabled={busy}
           >

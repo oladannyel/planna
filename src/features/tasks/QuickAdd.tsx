@@ -161,7 +161,7 @@ export function QuickAdd() {
         <p className="mt-3 text-sm text-teal">Added “{feedback.title}”</p>
       ) : null}
       {feedback.kind === "error" ? (
-        <p className="mt-3 text-sm text-danger">{feedback.message}</p>
+        <p className="mt-3 text-sm text-danger-ink">{feedback.message}</p>
       ) : null}
     </div>
   );

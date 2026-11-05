@@ -50,7 +50,7 @@ export function KanbanColumn({ status, label, tasks, maxVisible, archiveHref }: 
           <p
             className={cn(
               "rounded-xl border border-dashed border-border px-3 py-8 text-center text-xs text-text-muted transition-colors",
-              isOver && "border-purple/60 text-purple",
+              isOver && "border-purple/60 text-purple-ink",
             )}
           >
             {isOver ? "Drop here" : "No tasks"}
@@ -60,7 +60,7 @@ export function KanbanColumn({ status, label, tasks, maxVisible, archiveHref }: 
         {hiddenCount > 0 && archiveHref ? (
           <Link
             href={archiveHref}
-            className="rounded-lg border border-dashed border-border px-3 py-2 text-center text-xs text-text-secondary transition-colors hover:border-purple/60 hover:text-purple"
+            className="rounded-lg border border-dashed border-border px-3 py-2 text-center text-xs text-text-secondary transition-colors hover:border-purple/60 hover:text-purple-ink"
           >
             View all {tasks.length} →
           </Link>

@@ -67,7 +67,7 @@ export default function LoginPage() {
       {status.kind === "sent" && (
         <p className="mt-4 text-sm text-teal">Check {status.email} for your sign-in link.</p>
       )}
-      {status.kind === "error" && <p className="mt-4 text-sm text-danger">{status.message}</p>}
+      {status.kind === "error" && <p className="mt-4 text-sm text-danger-ink">{status.message}</p>}
     </div>
   );
 }

@@ -11,7 +11,7 @@ export function RequestSuccess({ onReset }: { onReset: () => void }) {
       <button
         type="button"
         onClick={onReset}
-        className="mt-6 text-sm font-medium text-purple hover:underline"
+        className="mt-6 text-sm font-medium text-purple-ink hover:underline"
       >
         Submit another request
       </button>

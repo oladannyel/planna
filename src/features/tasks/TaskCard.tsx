@@ -89,7 +89,7 @@ export function TaskCard({ task }: { task: Task }) {
             </span>
           ) : null}
           {task.source === "request_link" && task.requestedBy ? (
-            <span className="truncate text-purple">from {task.requestedBy}</span>
+            <span className="truncate text-purple-ink">from {task.requestedBy}</span>
           ) : null}
         </div>
       ) : null}

@@ -40,7 +40,7 @@ export function QuestionManager({ questions }: { questions: EthicsQuestion[] }) 
               onClick={() => void remove(q.id)}
               disabled={busy}
               aria-label={`Remove: ${q.question}`}
-              className="shrink-0 text-text-muted hover:text-danger"
+              className="shrink-0 text-text-muted hover:text-danger-ink"
             >
               <X className="h-4 w-4" aria-hidden />
             </button>
