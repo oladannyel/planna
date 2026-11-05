@@ -28,6 +28,11 @@ export default defineConfig({
         "node_modules/",
         ".next/**",
         "coverage/**",
+        // Vendored TailAdmin reference clone — not plAnna source. It lives in
+        // the tree only while the design system is being ported out of it, and
+        // is removed at P6.6. Excluded here as well as in tsconfig/eslint/
+        // prettier because none of those tools read .gitignore.
+        "free-nextjs-admin-dashboard/**",
         // Next.js App Router entrypoints — integration-tested via the app, not
         // units. (Anchored `src/app/**` alone misses route-group dirs like
         // `(auth)`/`(dashboard)` under v8 glob matching, so match broadly.)

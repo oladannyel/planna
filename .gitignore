@@ -46,3 +46,10 @@ phase*.md
 parser_fix.md
 task-scheduling-plan.md
 PLANNA_BUILD_SPEC.md
+
+# TailAdmin reference clone (to be extracted to its own repo)
+free-nextjs-admin-dashboard/
+
+# UI redesign planning docs (local tracking, untracked per D2)
+PLANNA_UI_MASTERPLAN.md
+PROGRESS.md

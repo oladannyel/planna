@@ -10,13 +10,25 @@
     "no-console": "error",
     "@typescript-eslint/no-explicit-any": "error",
     "@typescript-eslint/no-floating-promises": "error",
-    "@typescript-eslint/consistent-type-imports": ["error", { "prefer": "type-imports" }],
-    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/consistent-type-imports": [
+      "error",
+      {
+        "prefer": "type-imports"
+      }
+    ],
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_"
+      }
+    ],
     "import/order": [
       "error",
       {
         "groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
-        "alphabetize": { "order": "asc" },
+        "alphabetize": {
+          "order": "asc"
+        },
         "newlines-between": "always"
       }
     ]
@@ -27,7 +39,8 @@
     "coverage/",
     "next-env.d.ts",
     "*.config.js",
-    "*.config.mjs"
+    "*.config.mjs",
+    "free-nextjs-admin-dashboard/"
   ],
   "overrides": [
     {
