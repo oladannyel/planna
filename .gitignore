@@ -37,3 +37,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dev server logs
+*.log
+
+# internal build/planning notes (kept locally, not published)
+phase*.md
+parser_fix.md
+task-scheduling-plan.md
+PLANNA_BUILD_SPEC.md

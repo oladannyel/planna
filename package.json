@@ -1,7 +1,34 @@
 {
   "name": "planna",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "description": "A to-do list that talks back: write one sentence about your day and plAnna turns it into a tracked Kanban board, then shows you where your attention actually went.",
+  "license": "MIT",
+  "author": "Daniel Olaniyan",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oladannyel/planna.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oladannyel/planna/issues"
+  },
+  "homepage": "https://github.com/oladannyel/planna#readme",
+  "keywords": [
+    "productivity",
+    "task-management",
+    "kanban",
+    "nextjs",
+    "supabase",
+    "typescript",
+    "self-hosted",
+    "personal-analytics",
+    "ai",
+    "openrouter"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.15.9",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
