@@ -54,7 +54,7 @@ export function EthicsCheckin({ weekStart, questions, initialAnswers }: EthicsCh
   }
 
   return (
-    <div className="space-y-4 rounded-xl border border-border bg-card p-4">
+    <div className="surface space-y-4 p-4">
       <h2 className="text-sm font-medium">This week&apos;s check-in</h2>
       {questions.map((q) => (
         <div key={q.id} className="space-y-1">

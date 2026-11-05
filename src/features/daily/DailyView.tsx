@@ -20,7 +20,7 @@ export function DailyView({ tasks, carryoverCount, streak }: DailyViewProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Today</h1>
+        <h1 className="font-display text-title-md font-bold text-text-primary">Today</h1>
         <StreakCounter streak={streak} />
       </div>
 

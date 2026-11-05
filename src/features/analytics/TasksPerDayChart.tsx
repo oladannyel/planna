@@ -18,7 +18,7 @@ export function TasksPerDayChart({ data }: { data: DayCount[] }) {
   const palette = useChartPalette();
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div className="surface p-4">
       <h3 className="mb-3 text-sm font-medium text-text-secondary">Tasks per day</h3>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data}>

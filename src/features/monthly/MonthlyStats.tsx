@@ -2,7 +2,7 @@ import type { InsightStats } from "@/features/analytics/metrics";
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div className="surface p-4">
       <p className="text-xl font-bold">{value}</p>
       <p className="text-xs text-text-secondary">{label}</p>
     </div>

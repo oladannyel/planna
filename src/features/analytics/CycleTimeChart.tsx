@@ -9,7 +9,7 @@ export function CycleTimeChart({ data }: { data: CycleTimePoint[] }) {
   const palette = useChartPalette();
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div className="surface p-4">
       <h3 className="mb-3 text-sm font-medium text-text-secondary">Cycle time (hours)</h3>
       {data.length === 0 ? (
         <p className="text-sm text-text-muted">No completed tasks yet.</p>

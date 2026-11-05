@@ -30,8 +30,8 @@ export default function LoginPage() {
   const isLoading = status.kind === "loading";
 
   return (
-    <div className="rounded-xl border border-border bg-card p-8">
-      <h1 className="text-2xl font-bold">plAnna</h1>
+    <div className="surface p-8">
+      <h1 className="font-display text-title-lg font-bold text-text-primary">plAnna</h1>
       <p className="mt-1 text-sm text-text-secondary">
         Plan, execute, and reflect — with a little AI.
       </p>
@@ -53,12 +53,12 @@ export default function LoginPage() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="you@example.com"
-          className="w-full rounded-xl border border-border bg-canvas px-4 py-2.5 text-text-primary outline-none placeholder:text-text-muted focus:border-purple"
+          className="w-full rounded-lg border border-border bg-canvas px-3.5 py-2.5 text-sm text-text-primary shadow-theme-xs outline-none transition-colors placeholder:text-text-muted focus:border-purple focus:ring-4 focus:ring-purple/10"
         />
         <button
           type="submit"
           disabled={isLoading || email.length === 0}
-          className="w-full rounded-xl bg-purple px-4 py-2.5 font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="inline-flex w-full items-center justify-center rounded-lg bg-purple px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs transition-colors hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? "Sending…" : "Send magic link"}
         </button>

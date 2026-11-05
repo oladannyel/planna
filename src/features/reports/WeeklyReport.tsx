@@ -42,7 +42,7 @@ export function WeeklyReport({ weekStart, hasTasks, initialNarrative }: WeeklyRe
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+    <div className="surface space-y-3 p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Weekly report</h3>
         <Button onClick={() => void generate()} disabled={busy}>

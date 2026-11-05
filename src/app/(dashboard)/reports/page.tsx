@@ -1,5 +1,6 @@
 import { addDays, parseISO } from "date-fns";
 
+import { PageHeader } from "@/components/layout";
 import { MonthlySummary, getMonthlySummary, monthParam, resolveMonth } from "@/features/monthly";
 import { WeeklyReport, getWeeklyReport } from "@/features/reports";
 import { getTasks } from "@/features/tasks/queries";
@@ -26,7 +27,7 @@ export default async function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Reports</h1>
+      <PageHeader title="Reports" crumbs={[{ label: "Home", href: "/" }, { label: "Reports" }]} />
 
       <section className="space-y-2">
         <h2 className="text-sm font-medium text-text-secondary">This week</h2>

@@ -87,7 +87,7 @@ export function QuickAdd() {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div className="surface p-4">
       <Textarea
         aria-label="New task"
         rows={3}

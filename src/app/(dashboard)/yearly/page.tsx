@@ -1,11 +1,12 @@
 import { CalendarClock } from "lucide-react";
 
+import { PageHeader } from "@/components/layout";
 import { EmptyState } from "@/components/shared";
 
 export default function YearlyPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Yearly</h1>
+      <PageHeader title="Yearly" crumbs={[{ label: "Home", href: "/" }, { label: "Yearly" }]} />
       <EmptyState
         icon={CalendarClock}
         title="Coming soon"

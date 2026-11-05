@@ -29,7 +29,7 @@ export function QuestionManager({ questions }: { questions: EthicsQuestion[] }) 
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+    <div className="surface space-y-3 p-4">
       <h2 className="text-sm font-medium">Your questions</h2>
       <ul className="space-y-2">
         {questions.map((q) => (

@@ -71,7 +71,7 @@ export function MonthlyCalendar({ weeks, dots, tasks }: MonthlyCalendarProps) {
       </div>
 
       {selected !== null ? (
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="surface p-4">
           <h3 className="text-sm font-medium">{selected}</h3>
           {dayTasks.length === 0 ? (
             <p className="mt-2 text-sm text-text-muted">No tasks on this day.</p>

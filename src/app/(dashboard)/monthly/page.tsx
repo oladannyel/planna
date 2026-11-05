@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
+import { PageHeader } from "@/components/layout";
 import { bestStreak, monthlyStats } from "@/features/analytics/metrics";
 import {
   MonthlyCalendar,
@@ -44,7 +45,7 @@ export default async function MonthlyPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Monthly</h1>
+        <PageHeader title="Monthly" crumbs={[{ label: "Home", href: "/" }, { label: "Monthly" }]} />
         <div className="flex items-center gap-2">
           <Link
             href={`/monthly?month=${monthParam(shiftMonth(ref, -1))}`}
