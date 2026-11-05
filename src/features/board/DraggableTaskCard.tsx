@@ -12,13 +12,22 @@ export function DraggableTaskCard({ task }: { task: Task }) {
     id: task.id,
   });
 
-  const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
+  const style = transform
+    ? { transform: CSS.Translate.toString(transform), zIndex: 50 }
+    : undefined;
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={cn("cursor-grab touch-none", isDragging && "opacity-50")}
+      className={cn(
+        "touch-none transition-shadow",
+        isDragging
+          ? // Lift the card while dragging rather than fading it out, so the
+            // thing under the cursor still reads as the card being moved.
+            "rotate-1 cursor-grabbing opacity-90 shadow-theme-lg"
+          : "cursor-grab",
+      )}
       {...listeners}
       {...attributes}
     >

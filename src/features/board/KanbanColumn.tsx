@@ -25,27 +25,42 @@ export function KanbanColumn({ status, label, tasks, maxVisible, archiveHref }: 
   return (
     <section
       ref={setNodeRef}
+      aria-label={`${label}, ${tasks.length} tasks`}
       className={cn(
-        "flex w-72 shrink-0 snap-start flex-col rounded-xl border border-border bg-card/40",
-        isOver && "ring-1 ring-purple",
+        "flex w-[300px] shrink-0 snap-start flex-col transition-colors lg:w-auto lg:flex-1",
+        // Columns are divided within one container rather than floating as
+        // separate cards — the reference's single-surface board.
+        "border-e border-border last:border-e-0",
+        isOver && "bg-purple/5",
       )}
     >
-      <header className="flex items-center justify-between border-b border-border px-3 py-2">
-        <h2 className="text-sm font-medium">{label}</h2>
-        <span className="rounded-md bg-border px-1.5 py-0.5 text-xs text-text-secondary">
+      <header className="flex items-center gap-2 px-4 py-3">
+        <h2 className="text-sm font-semibold text-text-primary">{label}</h2>
+        <span className="rounded-full bg-text-muted/15 px-2 py-0.5 text-xs font-medium text-text-muted">
           {tasks.length}
         </span>
       </header>
 
-      <div className="flex flex-col gap-2 p-2">
+      <div className="scrollbar-thin flex flex-1 flex-col gap-3 px-3 pb-4">
         {visibleTasks.map((task) => (
           <DraggableTaskCard key={task.id} task={task} />
         ))}
-        {tasks.length === 0 ? <p className="px-1 py-4 text-xs text-text-muted">No tasks</p> : null}
+
+        {tasks.length === 0 ? (
+          <p
+            className={cn(
+              "rounded-xl border border-dashed border-border px-3 py-8 text-center text-xs text-text-muted transition-colors",
+              isOver && "border-purple/60 text-purple",
+            )}
+          >
+            {isOver ? "Drop here" : "No tasks"}
+          </p>
+        ) : null}
+
         {hiddenCount > 0 && archiveHref ? (
           <Link
             href={archiveHref}
-            className="rounded-lg border border-dashed border-border px-2 py-2 text-center text-xs text-text-secondary hover:border-purple/60 hover:text-purple"
+            className="rounded-lg border border-dashed border-border px-3 py-2 text-center text-xs text-text-secondary transition-colors hover:border-purple/60 hover:text-purple"
           >
             View all {tasks.length} →
           </Link>

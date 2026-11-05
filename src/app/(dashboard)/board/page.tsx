@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/layout";
 import { KanbanBoard } from "@/features/board";
 import { QuickAdd } from "@/features/tasks/QuickAdd";
 import { TaskSheetProvider } from "@/features/tasks/TaskSheetProvider";
@@ -9,7 +10,7 @@ export default async function BoardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Board</h1>
+      <PageHeader title="Board" crumbs={[{ label: "Home", href: "/" }, { label: "Board" }]} />
       <QuickAdd />
       <TaskSheetProvider>
         <KanbanBoard initialTasks={tasks} />

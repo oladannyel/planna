@@ -29,26 +29,37 @@ function makeTask(overrides: Partial<Task> = {}): Task {
 }
 
 describe("TaskCard", () => {
-  it("renders the title, priority, and status", () => {
+  it("renders the title", () => {
     render(<TaskCard task={makeTask()} />);
     expect(screen.getByText("Ship the thing")).toBeInTheDocument();
-    expect(screen.getByText("High")).toBeInTheDocument();
-    expect(screen.getByText("To do")).toBeInTheDocument();
   });
 
-  it("shows a carryover badge with the count", () => {
+  it("conveys priority to screen readers, since it is shown only as a colour", () => {
+    render(<TaskCard task={makeTask({ priority: "urgent" })} />);
+    expect(screen.getByText("Urgent")).toBeInTheDocument();
+  });
+
+  it("shows the carryover count", () => {
     render(<TaskCard task={makeTask({ carriedOver: true, carryCount: 3 })} />);
-    expect(screen.getByText("Carried ×3")).toBeInTheDocument();
+    expect(screen.getByTitle("Carried over 3 time(s)")).toHaveTextContent("3");
+  });
+
+  it("renders up to three tags, then a overflow count", () => {
+    render(<TaskCard task={makeTask({ tags: ["a", "b", "c", "d", "e"] })} />);
+    expect(screen.getByText("a")).toBeInTheDocument();
+    expect(screen.getByText("c")).toBeInTheDocument();
+    expect(screen.queryByText("d")).not.toBeInTheDocument();
+    expect(screen.getByText("+2")).toBeInTheDocument();
   });
 
   it("omits the carryover badge for fresh tasks", () => {
     render(<TaskCard task={makeTask()} />);
-    expect(screen.queryByText(/Carried/)).not.toBeInTheDocument();
+    expect(screen.queryByTitle(/Carried over/)).not.toBeInTheDocument();
   });
 
   it("shows the requester for request-link tasks", () => {
     render(<TaskCard task={makeTask({ source: "request_link", requestedBy: "Ada" })} />);
-    expect(screen.getByText("Requested by Ada")).toBeInTheDocument();
+    expect(screen.getByText("from Ada")).toBeInTheDocument();
   });
 
   it("renders description and due date when present", () => {
@@ -57,8 +68,8 @@ describe("TaskCard", () => {
     expect(screen.getByText("2026-07-01")).toBeInTheDocument();
   });
 
-  it("applies the priority-coloured left border", () => {
+  it("applies the priority-coloured left edge", () => {
     const { container } = render(<TaskCard task={makeTask({ priority: "urgent" })} />);
-    expect(container.firstElementChild?.className).toContain("border-l-danger");
+    expect(container.firstElementChild?.className).toContain("before:bg-danger");
   });
 });

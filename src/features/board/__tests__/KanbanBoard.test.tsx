@@ -47,8 +47,29 @@ describe("KanbanBoard", () => {
     render(<KanbanBoard initialTasks={tasks} />);
     expect(screen.getByText("Task 1")).toBeInTheDocument();
     expect(screen.getByText("Task 3")).toBeInTheDocument();
-    // Two tasks in "To do" → count badge shows 2.
-    expect(screen.getByText("2")).toBeInTheDocument();
+    // Counts now appear in both the toolbar tabs and the column headers, so
+    // assert against the column's accessible name rather than a bare "2".
+    expect(screen.getByRole("region", { name: "To do, 2 tasks" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Done, 1 tasks" })).toBeInTheDocument();
+  });
+
+  it("filters to a single column when a toolbar tab is chosen", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    const tasks = [makeTask("1", "todo"), makeTask("2", "done")];
+    render(<KanbanBoard initialTasks={tasks} />);
+
+    await user.click(screen.getByRole("tab", { name: /Done/ }));
+
+    expect(screen.getByText("Task 2")).toBeInTheDocument();
+    expect(screen.queryByText("Task 1")).not.toBeInTheDocument();
+  });
+
+  it("counts every status in the toolbar", () => {
+    const tasks = [makeTask("1", "todo"), makeTask("2", "todo"), makeTask("3", "done")];
+    render(<KanbanBoard initialTasks={tasks} />);
+    expect(screen.getByRole("tab", { name: /All tasks 3/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /To do 2/ })).toBeInTheDocument();
   });
 
   it("shows an empty hint for columns with no tasks", () => {
@@ -60,8 +81,8 @@ describe("KanbanBoard", () => {
     const doneTasks = Array.from({ length: 10 }, (_, i) => makeTask(`d${i}`, "done"));
     render(<KanbanBoard initialTasks={doneTasks} />);
 
-    // Count badge reflects the true total...
-    expect(screen.getByText("10")).toBeInTheDocument();
+    // Count reflects the true total...
+    expect(screen.getByRole("region", { name: "Done, 10 tasks" })).toBeInTheDocument();
     // ...but only the preview limit of cards is actually rendered.
     expect(screen.getAllByText(/^Task d/)).toHaveLength(8);
     expect(screen.getByRole("link", { name: "View all 10 →" })).toHaveAttribute(
@@ -74,7 +95,7 @@ describe("KanbanBoard", () => {
     const cancelledTasks = Array.from({ length: 23 }, (_, i) => makeTask(`c${i}`, "cancelled"));
     render(<KanbanBoard initialTasks={cancelledTasks} />);
 
-    expect(screen.getByText("23")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Cancelled, 23 tasks" })).toBeInTheDocument();
     expect(screen.getAllByText(/^Task c/)).toHaveLength(8);
     expect(screen.getByRole("link", { name: "View all 23 →" })).toHaveAttribute(
       "href",
@@ -86,7 +107,7 @@ describe("KanbanBoard", () => {
     const todoTasks = Array.from({ length: 9 }, (_, i) => makeTask(`t${i}`, "todo"));
     render(<KanbanBoard initialTasks={todoTasks} />);
 
-    expect(screen.getByText("9")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "To do, 9 tasks" })).toBeInTheDocument();
     expect(screen.getAllByText(/^Task t/)).toHaveLength(8);
     expect(screen.getByRole("link", { name: "View all 9 →" })).toHaveAttribute(
       "href",

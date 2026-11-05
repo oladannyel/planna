@@ -1,19 +1,29 @@
 "use client";
 
-import { PriorityBadge, StatusBadge } from "@/components/shared";
+import { CalendarDays, Repeat2 } from "lucide-react";
+
+import { Badge } from "@/components/shared";
 import { cn } from "@/lib/cn";
 
 import { useTaskSheet } from "./TaskSheetProvider";
 import type { Task, TaskPriority } from "./types";
 
-const PRIORITY_BORDER: Record<TaskPriority, string> = {
-  low: "border-l-text-muted",
-  medium: "border-l-purple",
-  high: "border-l-amber",
-  urgent: "border-l-danger",
+/** Priority shows as a left edge — colour without spending a badge slot. */
+const PRIORITY_EDGE: Record<TaskPriority, string> = {
+  low: "before:bg-text-muted",
+  medium: "before:bg-purple",
+  high: "before:bg-amber",
+  urgent: "before:bg-danger",
 };
 
-/** Human-readable deadline: date + time when a precise dueAt exists, else the date. */
+const PRIORITY_LABEL: Record<TaskPriority, string> = {
+  low: "Low priority",
+  medium: "Medium priority",
+  high: "High priority",
+  urgent: "Urgent",
+};
+
+/** Deadline: date plus time when a precise dueAt exists, otherwise the date. */
 function deadlineLabel(task: Task): string | null {
   if (task.dueAt) {
     const d = new Date(task.dueAt);
@@ -41,31 +51,59 @@ export function TaskCard({ task }: { task: Task }) {
         open(task);
       }}
       className={cn(
-        "relative block w-full rounded-xl border border-l-4 border-border bg-card p-3 text-left transition-colors hover:border-purple/60",
-        PRIORITY_BORDER[task.priority],
+        "surface group relative block w-full overflow-hidden p-4 text-start",
+        "before:absolute before:inset-y-0 before:start-0 before:w-1 before:content-['']",
+        "transition-shadow hover:shadow-theme-md",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple",
+        PRIORITY_EDGE[task.priority],
       )}
     >
-      {task.carriedOver ? (
-        <span className="absolute right-2 top-2 rounded-md bg-amber/20 px-1.5 py-0.5 text-[10px] font-medium text-amber">
-          Carried ×{task.carryCount}
-        </span>
-      ) : null}
+      <span className="sr-only">{PRIORITY_LABEL[task.priority]}</span>
 
-      <h3 className="pr-16 text-sm font-medium">{task.title}</h3>
-
-      {task.source === "request_link" && task.requestedBy ? (
-        <p className="mt-0.5 text-xs text-purple">Requested by {task.requestedBy}</p>
-      ) : null}
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="text-sm font-medium leading-snug text-text-primary">{task.title}</h3>
+        {task.carriedOver ? (
+          <span
+            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber/15 px-2 py-0.5 text-[10px] font-medium text-amber"
+            title={`Carried over ${task.carryCount} time(s)`}
+          >
+            <Repeat2 className="h-3 w-3" aria-hidden />
+            {task.carryCount}
+          </span>
+        ) : null}
+      </div>
 
       {task.description ? (
-        <p className="mt-1 line-clamp-2 text-xs text-text-secondary">{task.description}</p>
+        <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-text-secondary">
+          {task.description}
+        </p>
       ) : null}
 
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <PriorityBadge priority={task.priority} />
-        <StatusBadge status={task.status} />
-        {deadline ? <span className="text-xs text-text-muted">{deadline}</span> : null}
-      </div>
+      {/* Meta row — the reference's calendar/counters line. */}
+      {deadline || task.source === "request_link" ? (
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-text-secondary">
+          {deadline ? (
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+              {deadline}
+            </span>
+          ) : null}
+          {task.source === "request_link" && task.requestedBy ? (
+            <span className="truncate text-purple">from {task.requestedBy}</span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {task.tags.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {task.tags.slice(0, 3).map((tag) => (
+            <Badge key={tag} tone="brand">
+              {tag}
+            </Badge>
+          ))}
+          {task.tags.length > 3 ? <Badge tone="muted">+{task.tags.length - 3}</Badge> : null}
+        </div>
+      ) : null}
     </button>
   );
 }
