@@ -53,3 +53,8 @@ free-nextjs-admin-dashboard/
 # UI redesign planning docs (local tracking, untracked per D2)
 PLANNA_UI_MASTERPLAN.md
 PROGRESS.md
+
+# local supabase + env backups
+.env.local.hosted-backup
+supabase/.branches
+supabase/.temp
