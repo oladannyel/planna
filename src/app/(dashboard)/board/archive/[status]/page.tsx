@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { PageHeader } from "@/components/layout";
 import { TaskCard } from "@/features/tasks/TaskCard";
 import { TaskSheetProvider } from "@/features/tasks/TaskSheetProvider";
 import { getTasksByStatus } from "@/features/tasks/queries";
@@ -39,11 +40,15 @@ export default async function StatusArchivePage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/board" className="text-xs text-text-muted hover:text-text-secondary">
-          ← Back to board
-        </Link>
-        <h1 className="mt-1 text-2xl font-bold">{label} archive</h1>
-        <p className="text-sm text-text-secondary">
+        <PageHeader
+          title={`${label} archive`}
+          crumbs={[
+            { label: "Home", href: "/" },
+            { label: "Board", href: "/board" },
+            { label: `${label} archive` },
+          ]}
+        />
+        <p className="-mt-4 text-sm text-text-secondary">
           {total} {lowerLabel} {total === 1 ? "task" : "tasks"}
         </p>
       </div>
@@ -54,11 +59,11 @@ export default async function StatusArchivePage({
           name="q"
           defaultValue={search}
           placeholder={`Search ${lowerLabel} tasks…`}
-          className="w-full max-w-sm rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:border-purple/60"
+          className="w-full max-w-sm rounded-lg border border-border bg-card px-3.5 py-2.5 text-sm text-text-primary shadow-theme-xs outline-none transition-colors placeholder:text-text-muted focus:border-purple focus:ring-4 focus:ring-purple/10"
         />
         <button
           type="submit"
-          className="rounded-lg border border-border px-3 py-2 text-sm text-text-secondary hover:border-purple/60 hover:text-purple"
+          className="rounded-lg border border-border px-3 py-2 text-sm text-text-secondary hover:border-purple/60 hover:text-purple-ink"
         >
           Search
         </button>
@@ -80,7 +85,10 @@ export default async function StatusArchivePage({
       {totalPages > 1 ? (
         <div className="flex items-center justify-center gap-4 text-sm">
           {page > 1 ? (
-            <Link href={pageHref(status, search, page - 1)} className="text-purple hover:underline">
+            <Link
+              href={pageHref(status, search, page - 1)}
+              className="text-purple-ink hover:underline"
+            >
               ← Prev
             </Link>
           ) : (
@@ -90,7 +98,10 @@ export default async function StatusArchivePage({
             Page {page} of {totalPages}
           </span>
           {page < totalPages ? (
-            <Link href={pageHref(status, search, page + 1)} className="text-purple hover:underline">
+            <Link
+              href={pageHref(status, search, page + 1)}
+              className="text-purple-ink hover:underline"
+            >
               Next →
             </Link>
           ) : (

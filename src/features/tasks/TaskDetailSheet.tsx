@@ -5,7 +5,6 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
-import { cn } from "@/lib/cn";
 
 import { deleteTask, updateTask, updateTaskStatus } from "./actions";
 import type { Task, TaskPriority, TaskStatus } from "./types";
@@ -195,7 +194,7 @@ export function TaskDetailSheet({ task, onClose }: { task: Task; onClose: () => 
             <span className="text-xs text-text-secondary">Deadline</span>
             <input
               type="datetime-local"
-              className={cn(FIELD, "[color-scheme:dark]")}
+              className={FIELD}
               value={dueLocal}
               onChange={(e) => setDueLocal(e.target.value)}
               disabled={busy}
@@ -225,12 +224,12 @@ export function TaskDetailSheet({ task, onClose }: { task: Task; onClose: () => 
           />
         </label>
 
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
+        {error ? <p className="text-sm text-danger-ink">{error}</p> : null}
 
         <div className="mt-auto flex items-center justify-between pt-2">
           <Button
             variant="ghost"
-            className="text-danger"
+            className="text-danger-ink"
             onClick={() => void remove()}
             disabled={busy}
           >

@@ -8,10 +8,49 @@ declare
   demo_user_id uuid := '00000000-0000-0000-0000-000000000001';
   demo_ws_id   uuid := '00000000-0000-0000-0000-0000000000a1';
 begin
-  -- Demo auth user (Supabase local exposes auth.users for seeding).
-  insert into auth.users (id, email, raw_user_meta_data)
-  values (demo_user_id, 'demo@planna.local', '{"name":"Demo User"}'::jsonb)
+  -- Demo auth user.
+  --
+  -- GoTrue looks users up by (email, aud, instance_id), so a row missing
+  -- those columns is invisible to it: sign-in then tries to CREATE the user
+  -- and collides with this row on users_email_partial_key (23505), making the
+  -- seeded account impossible to log in as. Every column below is load-bearing.
+  insert into auth.users (
+    instance_id, id, aud, role, email,
+    email_confirmed_at, created_at, updated_at,
+    raw_app_meta_data, raw_user_meta_data,
+    is_sso_user, is_anonymous,
+    -- GoTrue scans these into non-nullable Go strings. Left NULL they produce
+    -- "Database error finding user" on every sign-in attempt. Empty, not null.
+    confirmation_token, recovery_token, email_change, email_change_token_new
+  )
+  values (
+    '00000000-0000-0000-0000-000000000000',
+    demo_user_id,
+    'authenticated',
+    'authenticated',
+    'demo@planna.local',
+    now(), now(), now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"name":"Demo User"}'::jsonb,
+    false, false,
+    '', '', '', ''
+  )
   on conflict (id) do nothing;
+
+  -- Matching email identity. Without it GoTrue has no provider record for the
+  -- account and the magic-link flow has nothing to attach the session to.
+  insert into auth.identities (
+    provider_id, user_id, identity_data, provider,
+    last_sign_in_at, created_at, updated_at
+  )
+  values (
+    demo_user_id::text,
+    demo_user_id,
+    jsonb_build_object('sub', demo_user_id::text, 'email', 'demo@planna.local', 'email_verified', true),
+    'email',
+    now(), now(), now()
+  )
+  on conflict (provider, provider_id) do nothing;
 
   insert into workspaces (id, owner_id, name, slug)
   values (demo_ws_id, demo_user_id, 'Demo Workspace', 'demo')

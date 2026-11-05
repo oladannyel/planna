@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/layout";
 import {
   EthicsCheckin,
   QuestionManager,
@@ -25,7 +26,7 @@ export default async function EthicsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Ethics</h1>
+        <PageHeader title="Ethics" crumbs={[{ label: "Home", href: "/" }, { label: "Ethics" }]} />
         <p className="mt-1 text-sm text-text-secondary">
           A weekly reflection on how you worked, in your own words.
         </p>

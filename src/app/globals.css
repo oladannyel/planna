@@ -2,18 +2,170 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Theme variables.
+ *
+ * Values are raw RGB channels, not hex, so Tailwind's opacity modifiers keep
+ * working (`bg-purple/15`, `bg-card/50`). `:root` carries the light theme and
+ * `.dark` overrides it; the root layout ships `.dark` by default because
+ * plAnna is a dark-first product.
+ *
+ * Neutral and elevation values adapted from TailAdmin (MIT, © 2023 TailAdmin).
+ */
 @layer base {
-  html {
+  :root {
+    /* Light theme — TailAdmin craft */
+    --color-canvas: 249 250 251; /* gray-50  #F9FAFB */
+    --color-card: 255 255 255; /* white            */
+    --color-card-hover: 249 250 251; /* gray-50     */
+    --color-border: 234 236 240; /* gray-200        */
+    --color-text-primary: 16 24 40; /* gray-900     */
+    --color-text-secondary: 71 84 103; /* gray-600    */
+    --color-text-muted: 102 112 133; /* gray-500    */
+
+    /* Accents tuned for contrast on light surfaces */
+    --color-purple: 109 40 217; /* brand-700 */
+    --color-teal: 15 118 110;
+    --color-amber: 180 71 8; /* warning-700 */
+    --color-danger: 180 35 24; /* error-700   */
+
+    /*
+     * Text-only accent variants. The plain accents double as fills — a purple
+     * button, a danger badge — so they cannot simply be lightened for
+     * legibility without wrecking white-on-purple. These are the values used
+     * when an accent is the *text* colour.
+     */
+    --color-purple-ink: 109 40 217; /* brand-700 */
+    --color-danger-ink: 180 35 24; /* error-700  */
+
+    color-scheme: light;
+  }
+
+  .dark {
+    /* Dark theme — plAnna's original identity, preserved exactly */
+    --color-canvas: 15 15 19; /* #0F0F13 */
+    --color-card: 23 23 31; /* #17171F   */
+    --color-card-hover: 30 30 46; /* #1E1E2E */
+    --color-border: 30 30 46; /* #1E1E2E   */
+    --color-text-primary: 248 250 252; /* #F8FAFC */
+    --color-text-secondary: 148 163 184; /* #94A3B8 */
+    --color-text-muted: 71 85 105; /* #475569 */
+
+    /* Accents brightened for dark surfaces */
+    --color-purple: 124 58 237; /* #7C3AED */
+    --color-teal: 13 148 136; /* #0D9488  */
+    --color-amber: 217 119 6; /* #D97706  */
+    --color-danger: 220 38 38; /* #DC2626  */
+
     color-scheme: dark;
+  }
+
+  * {
+    border-color: rgb(var(--color-border));
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
     min-height: 100dvh;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /*
+   * Baseline focus ring for everything keyboard-reachable. Components may
+   * override it, but nothing ships without a visible focus state just
+   * because an author forgot — which is how most of them go missing.
+   */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid rgb(var(--color-purple));
+    outline-offset: 2px;
+    border-radius: 0.375rem;
+  }
+
+  /*
+   * Respect a reduced-motion preference. Transitions and animations are
+   * decoration here — nothing in plAnna conveys meaning through movement —
+   * so they can be reduced to near-zero rather than reworked.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/*
+ * Sidebar menu composites, adapted from TailAdmin's `@utility menu-item`
+ * definitions into Tailwind v3 component classes.
+ */
+@layer components {
+  .menu-item {
+    @apply relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors;
+  }
+
+  .menu-item-active {
+    @apply bg-purple/15 text-purple dark:bg-purple/20 dark:text-brand-300;
+  }
+
+  .menu-item-inactive {
+    @apply text-text-secondary hover:bg-card-hover hover:text-text-primary;
+  }
+
+  .menu-item-icon-active {
+    @apply text-purple dark:text-brand-300;
+  }
+
+  .menu-item-icon-inactive {
+    @apply text-text-muted group-hover:text-text-secondary;
+  }
+
+  .menu-badge {
+    @apply rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide;
+  }
+
+  /* Card surface — the base shape every panel in the app shares. */
+  .surface {
+    @apply rounded-2xl border border-border bg-card shadow-theme-sm;
+  }
+
+  .surface-hover {
+    @apply transition-colors hover:border-text-muted/30 hover:bg-card-hover;
   }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Thin, theme-aware scrollbar for board columns and long panels. */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--color-text-muted) / 0.4) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--color-text-muted) / 0.4);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
   }
 }

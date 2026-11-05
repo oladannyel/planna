@@ -87,7 +87,7 @@ export function QuickAdd() {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div className="surface p-4">
       <Textarea
         aria-label="New task"
         rows={3}
@@ -119,7 +119,7 @@ export function QuickAdd() {
             <input
               type="datetime-local"
               aria-label="Deadline"
-              className={`${FIELD} [color-scheme:dark]`}
+              className={FIELD}
               value={dueLocal}
               onChange={(event) => setDueLocal(event.target.value)}
               disabled={busy}
@@ -161,7 +161,7 @@ export function QuickAdd() {
         <p className="mt-3 text-sm text-teal">Added “{feedback.title}”</p>
       ) : null}
       {feedback.kind === "error" ? (
-        <p className="mt-3 text-sm text-danger">{feedback.message}</p>
+        <p className="mt-3 text-sm text-danger-ink">{feedback.message}</p>
       ) : null}
     </div>
   );

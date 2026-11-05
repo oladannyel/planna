@@ -29,7 +29,7 @@ export function QuestionManager({ questions }: { questions: EthicsQuestion[] }) 
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+    <div className="surface space-y-3 p-4">
       <h2 className="text-sm font-medium">Your questions</h2>
       <ul className="space-y-2">
         {questions.map((q) => (
@@ -40,7 +40,7 @@ export function QuestionManager({ questions }: { questions: EthicsQuestion[] }) 
               onClick={() => void remove(q.id)}
               disabled={busy}
               aria-label={`Remove: ${q.question}`}
-              className="shrink-0 text-text-muted hover:text-danger"
+              className="shrink-0 text-text-muted hover:text-danger-ink"
             >
               <X className="h-4 w-4" aria-hidden />
             </button>

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import type { InsightStats } from "@/features/analytics/metrics";
 import { monthlyStats } from "@/features/analytics/metrics";
+import { TASK_COLUMNS } from "@/features/tasks/columns";
 import { rowToTask } from "@/features/tasks/mappers";
 import { getAuthedContext } from "@/features/workspace/queries";
 import { env } from "@/lib/env";
@@ -68,7 +69,7 @@ export async function generateMonthlySummary(
   const first = new Date(year, month - 1, 1);
   const { data, error } = await ctx.value.supabase
     .from("tasks")
-    .select("*")
+    .select(TASK_COLUMNS)
     .eq("workspace_id", ctx.value.workspaceId)
     .gte("created_at", startOfMonth(first).toISOString())
     .lte("created_at", endOfMonth(first).toISOString());

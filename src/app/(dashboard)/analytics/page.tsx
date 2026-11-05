@@ -1,6 +1,7 @@
 import { subDays } from "date-fns";
 import { BarChart3 } from "lucide-react";
 
+import { PageHeader } from "@/components/layout";
 import { EmptyState } from "@/components/shared";
 import {
   CategoryBreakdown,
@@ -30,7 +31,10 @@ export default async function AnalyticsPage() {
   if (tasks.length === 0) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Analytics</h1>
+        <PageHeader
+          title="Analytics"
+          crumbs={[{ label: "Home", href: "/" }, { label: "Analytics" }]}
+        />
         <EmptyState
           icon={BarChart3}
           title="No data yet"
@@ -45,7 +49,10 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Analytics</h1>
+      <PageHeader
+        title="Analytics"
+        crumbs={[{ label: "Home", href: "/" }, { label: "Analytics" }]}
+      />
       <OnTimeRateCard
         onTimeRate={onTimeRate(tasks)}
         scheduledRate={scheduledRate(tasks)}

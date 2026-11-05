@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { FIELD_BASE } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { TASK_PRIORITIES, isTaskPriority } from "@/features/tasks/status";
 import type { TaskPriority } from "@/features/tasks/types";
@@ -12,8 +13,9 @@ import { submitRequest } from "./actions";
 
 const URGENCIES = TASK_PRIORITIES;
 
-const inputClass =
-  "w-full rounded-xl border border-border bg-canvas px-4 py-2.5 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-purple";
+// The public request form shares the app's field chrome rather than keeping
+// its own copy, so the two cannot drift.
+const inputClass = FIELD_BASE;
 
 export function RequestForm({ slug }: { slug: string }) {
   const [requesterName, setRequesterName] = useState("");
@@ -68,10 +70,10 @@ export function RequestForm({ slug }: { slug: string }) {
         event.preventDefault();
         void submit();
       }}
-      className="space-y-4 rounded-xl border border-border bg-card p-6"
+      className="surface space-y-4 p-6"
     >
       <div>
-        <h1 className="text-xl font-bold">Submit a request</h1>
+        <h1 className="font-display text-title-md font-bold text-text-primary">Submit a request</h1>
         <p className="mt-1 text-sm text-text-secondary">
           Describe what you need and it&apos;ll be added to the planning board.
         </p>
@@ -150,7 +152,7 @@ export function RequestForm({ slug }: { slug: string }) {
         </div>
       </div>
 
-      {error ? <p className="text-sm text-danger">{error}</p> : null}
+      {error ? <p className="text-sm text-danger-ink">{error}</p> : null}
 
       <Button type="submit" disabled={busy} className="w-full">
         {busy ? "Submitting…" : "Submit request"}

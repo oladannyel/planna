@@ -21,7 +21,7 @@ export function WeeklyPlanner({ days, buckets, prevWeek, nextWeek }: WeeklyPlann
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Weekly</h1>
+        <h1 className="font-display text-title-md font-bold text-text-primary">Weekly</h1>
         <div className="flex items-center gap-2">
           <Link
             href={`/weekly?week=${prevWeek}`}

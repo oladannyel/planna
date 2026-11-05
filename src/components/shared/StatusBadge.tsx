@@ -1,12 +1,13 @@
 import type { TaskStatus } from "@/features/tasks/types";
 
+import type { BadgeTone } from "./Badge";
 import { Badge } from "./Badge";
 
-const STYLES: Record<TaskStatus, string> = {
-  todo: "bg-text-muted/20 text-text-secondary",
-  in_progress: "bg-purple/20 text-purple",
-  done: "bg-teal/20 text-teal",
-  cancelled: "bg-text-muted/10 text-text-muted line-through",
+const TONES: Record<TaskStatus, BadgeTone> = {
+  todo: "neutral",
+  in_progress: "brand",
+  done: "success",
+  cancelled: "muted",
 };
 
 const LABELS: Record<TaskStatus, string> = {
@@ -17,5 +18,13 @@ const LABELS: Record<TaskStatus, string> = {
 };
 
 export function StatusBadge({ status }: { status: TaskStatus }) {
-  return <Badge className={STYLES[status]}>{LABELS[status]}</Badge>;
+  // Spread rather than pass `undefined`: exactOptionalPropertyTypes forbids
+  // an explicit undefined for an optional prop.
+  const strikethrough = status === "cancelled" ? { className: "line-through" } : {};
+
+  return (
+    <Badge tone={TONES[status]} {...strikethrough}>
+      {LABELS[status]}
+    </Badge>
+  );
 }

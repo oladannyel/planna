@@ -22,20 +22,40 @@ function reduce(prev: Task[], payload: RealtimePostgresChangesPayload<TaskRow>):
 /**
  * Local task state seeded from the server, kept live via a Supabase realtime
  * subscription on the `tasks` table. `setTasks` enables optimistic updates.
+ *
+ * The subscription is scoped to one workspace. Row Level Security already
+ * prevents another workspace's rows reaching this client, so the filter is
+ * not what makes this safe — it avoids asking the server to evaluate RLS for
+ * events this client could never use, and keeps the channel name distinct
+ * per workspace so two subscriptions cannot collide.
  */
-export function useTasks(initialTasks: Task[]): {
+export function useTasks(
+  initialTasks: Task[],
+  workspaceId?: string,
+): {
   tasks: Task[];
   setTasks: (next: Task[]) => void;
 } {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
 
+  // Fall back to the seed data's workspace when none is passed, so existing
+  // call sites keep working without threading the id through every component.
+  const scopeId = workspaceId ?? initialTasks[0]?.workspaceId;
+
   useEffect(() => {
+    if (!scopeId) return;
+
     const supabase = createClient();
     const channel = supabase
-      .channel("tasks-changes")
+      .channel(`tasks-changes:${scopeId}`)
       .on<TaskRow>(
         "postgres_changes",
-        { event: "*", schema: "public", table: "tasks" },
+        {
+          event: "*",
+          schema: "public",
+          table: "tasks",
+          filter: `workspace_id=eq.${scopeId}`,
+        },
         (payload) => {
           setTasks((prev) => reduce(prev, payload));
         },
@@ -45,7 +65,7 @@ export function useTasks(initialTasks: Task[]): {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, []);
+  }, [scopeId]);
 
   return { tasks, setTasks };
 }

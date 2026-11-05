@@ -5,7 +5,7 @@ import type { WeekDay } from "./week";
 
 export function WeekColumn({ day, tasks }: { day: WeekDay; tasks: Task[] }) {
   return (
-    <section className="flex min-w-[12rem] flex-col rounded-xl border border-border bg-card/40 md:min-w-0">
+    <section className="surface flex min-w-[12rem] flex-col md:min-w-0">
       <header className="border-b border-border px-3 py-2">
         <p className="text-sm font-medium">{day.weekday}</p>
         <p className="text-xs text-text-muted">{day.label}</p>

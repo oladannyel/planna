@@ -7,6 +7,7 @@ import { err, ok } from "@/lib/result";
 import type { Result } from "@/lib/result";
 import type { Database, Json } from "@/types/database";
 
+import { TASK_COLUMNS } from "./columns";
 import { rowToTask } from "./mappers";
 import { parseMultipleTasksFromText, parseTaskFromText } from "./parser";
 import { taskInputSchema } from "./schema";
@@ -88,7 +89,7 @@ export async function createTask(
       completed_at: completedAt,
       status_history: [statusEntry(status)],
     })
-    .select("*")
+    .select(TASK_COLUMNS)
     .single();
 
   if (error) {
@@ -131,7 +132,7 @@ export async function updateTask(taskId: string, input: Partial<TaskInput>): Pro
     .update(patch)
     .eq("workspace_id", ctx.value.workspaceId)
     .eq("id", taskId)
-    .select("*")
+    .select(TASK_COLUMNS)
     .single();
 
   if (error) {
@@ -165,7 +166,7 @@ export async function updateTaskStatus(taskId: string, status: TaskStatus): Prom
     .update(patch)
     .eq("workspace_id", ctx.value.workspaceId)
     .eq("id", taskId)
-    .select("*")
+    .select(TASK_COLUMNS)
     .single();
 
   if (error) {

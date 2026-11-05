@@ -21,12 +21,12 @@ export function OnTimeRateCard({
   carryoverRate,
 }: OnTimeRateCardProps) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div className="surface p-4">
       <h3 className="mb-3 text-sm font-medium text-text-secondary">Rates</h3>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <Stat label="On time" value={onTimeRate} tone="text-teal" />
         <Stat label="Scheduled" value={scheduledRate} tone="text-text-primary" />
-        <Stat label="Completed" value={completionRate} tone="text-purple" />
+        <Stat label="Completed" value={completionRate} tone="text-purple-ink" />
         <Stat label="Carried over" value={carryoverRate} tone="text-amber" />
       </div>
       <p className="mt-3 text-xs text-text-muted">

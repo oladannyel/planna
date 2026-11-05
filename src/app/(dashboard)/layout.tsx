@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { MobileNav, Sidebar, TopBar } from "@/components/layout";
+import { MobileNav, Sidebar, SidebarProvider, TopBar } from "@/components/layout";
 import { ToastProvider } from "@/components/ui";
 import { CarryoverNotifier } from "@/features/daily/CarryoverNotifier";
 import { detectCarryovers } from "@/features/tasks/carryover";
@@ -41,14 +41,16 @@ export default async function DashboardLayout({
 
   return (
     <ToastProvider>
-      <div className="flex min-h-dvh">
-        <Sidebar workspaceName={workspaceName} />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <TopBar email={user.email ?? ""} />
-          <main className="flex-1 px-4 pb-24 pt-6 md:px-6 md:pb-6">{children}</main>
-          <MobileNav />
+      <SidebarProvider>
+        <div className="flex min-h-dvh bg-canvas">
+          <Sidebar workspaceName={workspaceName} />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <TopBar email={user.email ?? ""} />
+            <main className="flex-1 px-4 pb-24 pt-6 md:px-6 md:pb-8">{children}</main>
+            <MobileNav />
+          </div>
         </div>
-      </div>
+      </SidebarProvider>
       <CarryoverNotifier count={carryoverCount} />
     </ToastProvider>
   );
