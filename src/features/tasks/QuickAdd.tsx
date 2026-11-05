@@ -119,7 +119,7 @@ export function QuickAdd() {
             <input
               type="datetime-local"
               aria-label="Deadline"
-              className={`${FIELD} [color-scheme:dark]`}
+              className={FIELD}
               value={dueLocal}
               onChange={(event) => setDueLocal(event.target.value)}
               disabled={busy}

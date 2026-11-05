@@ -6,7 +6,7 @@ type Variant = "primary" | "ghost";
 
 const VARIANTS: Record<Variant, string> = {
   primary: "bg-purple text-white hover:opacity-90",
-  ghost: "border border-border text-text-secondary hover:bg-white/5",
+  ghost: "border border-border text-text-secondary hover:bg-card-hover hover:text-text-primary",
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
