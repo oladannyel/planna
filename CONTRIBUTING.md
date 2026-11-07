@@ -20,11 +20,17 @@ See [Quick start](README.md#quick-start) in the README. You need a Supabase proj
 Four gates. All four must be green before a pull request can merge, and CI runs every one of them on every push:
 
 ```bash
-pnpm typecheck   # tsc --noEmit, strict mode
-pnpm lint        # eslint, --max-warnings 0
-pnpm test        # vitest with coverage
-pnpm build       # next build
+pnpm typecheck     # tsc --noEmit, strict mode
+pnpm lint          # eslint, --max-warnings 0
+pnpm test          # vitest with coverage
+pnpm build:check   # next build, into its own directory
 ```
+
+Use `build:check`, not `build`, while a dev server is running. The two share
+`.next` by default, and a build run alongside `next dev` leaves the dev server
+serving HTML where its stylesheet should be — the app renders completely
+unstyled with no error reported anywhere. `build:check` builds into
+`.next-build` instead, so it cannot interfere.
 
 Run them locally before you push. A Husky pre-commit hook runs lint-staged on staged files, but it is a convenience, not a substitute.
 
