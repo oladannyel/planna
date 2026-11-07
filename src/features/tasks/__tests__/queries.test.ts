@@ -34,7 +34,7 @@ const h = vi.hoisted(() => {
   const ctxResult: { value: unknown } = { value: null };
 
   const builder: Record<string, unknown> = {};
-  for (const m of ["select", "eq", "gte", "lte", "order", "ilike", "range"]) {
+  for (const m of ["select", "eq", "gte", "lte", "lt", "in", "order", "ilike", "range"]) {
     builder[m] = () => builder;
   }
   builder.maybeSingle = () => Promise.resolve(tableResult.value);
@@ -48,7 +48,8 @@ vi.mock("@/features/workspace/queries", () => ({
   getAuthedContext: () => Promise.resolve(h.ctxResult.value),
 }));
 
-const { getTasks, getTaskById, getTasksInRange, getTasksByStatus } = await import("../queries");
+const { getTasks, getTaskById, getTasksInRange, getTasksByStatus, countCarryovers } =
+  await import("../queries");
 
 beforeEach(() => {
   h.ctxResult.value = {
@@ -167,5 +168,35 @@ describe("getTasksInRange", () => {
     const result = await getTasksInRange("2026-06-15", "2026-06-21");
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe("NOT_FOUND");
+  });
+});
+
+describe("countCarryovers", () => {
+  it("returns the count without fetching rows", async () => {
+    h.tableResult.value = { data: null, error: null, count: 7 };
+    const result = await countCarryovers();
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value).toBe(7);
+  });
+
+  it("treats a null count as zero", async () => {
+    h.tableResult.value = { data: null, error: null, count: null };
+    const result = await countCarryovers();
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value).toBe(0);
+  });
+
+  it("propagates context errors", async () => {
+    h.ctxResult.value = { ok: false, error: { code: "UNAUTHORIZED", message: "nope" } };
+    const result = await countCarryovers();
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("UNAUTHORIZED");
+  });
+
+  it("returns DB_ERROR on query failure", async () => {
+    h.tableResult.value = { data: null, error: { message: "boom" }, count: null };
+    const result = await countCarryovers();
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("DB_ERROR");
   });
 });

@@ -1,3 +1,4 @@
+import { requestMemo } from "@/lib/request-memo";
 import { err, ok } from "@/lib/result";
 import type { Result } from "@/lib/result";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -13,8 +14,15 @@ export interface AuthedContext {
 /**
  * Resolve the authenticated user and their workspace in one step. Every task
  * query/action funnels through here so auth + workspace scoping is consistent.
+ *
+ * Memoized per request with React `cache`. A single navigation renders the
+ * dashboard layout and the page, and previously each call re-ran
+ * `auth.getUser()` plus a workspaces lookup — two extra round trips per page
+ * view for data that cannot change mid-render.
  */
-export async function getAuthedContext(): Promise<Result<AuthedContext>> {
+export const getAuthedContext = requestMemo(async function getAuthedContext(): Promise<
+  Result<AuthedContext>
+> {
   const supabase = createServerSupabaseClient();
 
   const {
@@ -40,4 +48,4 @@ export async function getAuthedContext(): Promise<Result<AuthedContext>> {
   }
 
   return ok({ supabase, userId: user.id, workspaceId: workspace.id });
-}
+});
