@@ -1,4 +1,7 @@
+import { startOfToday } from "date-fns";
+
 import { getAuthedContext } from "@/features/workspace/queries";
+import { requestMemo } from "@/lib/request-memo";
 import { err, ok } from "@/lib/result";
 import type { Result } from "@/lib/result";
 
@@ -6,8 +9,15 @@ import { TASK_COLUMNS } from "./columns";
 import { rowToTask } from "./mappers";
 import type { Task, TaskStatus } from "./types";
 
-/** All tasks in the caller's workspace, newest first. */
-export async function getTasks(): Promise<Result<Task[]>> {
+/**
+ * All tasks in the caller's workspace, newest first.
+ *
+ * Memoized per request with React `cache`. The dashboard layout and the page
+ * beneath it both need tasks, and without this a single navigation fetched the
+ * whole table twice. At 788 bytes a row, a 1,000-task workspace was shipping
+ * ~1.5 MB per page view to draw one board.
+ */
+export const getTasks = requestMemo(async function getTasks(): Promise<Result<Task[]>> {
   const ctx = await getAuthedContext();
   if (!ctx.ok) return ctx;
 
@@ -22,7 +32,39 @@ export async function getTasks(): Promise<Result<Task[]>> {
   }
 
   return ok(data.map(rowToTask));
-}
+});
+
+/**
+ * How many open tasks were created before today — the carryover count the
+ * dashboard layout badges on every route.
+ *
+ * Deliberately a count, not a fetch. The layout previously pulled every task
+ * row across the wire and called `detectCarryovers` on the result purely to
+ * read `.length`. `head: true` returns the count in a header and no rows at
+ * all, so this costs effectively nothing regardless of workspace size.
+ *
+ * The predicate must stay in step with `detectCarryovers`: open status
+ * (todo / in_progress) and created before the start of today.
+ */
+export const countCarryovers = requestMemo(async function countCarryovers(): Promise<
+  Result<number>
+> {
+  const ctx = await getAuthedContext();
+  if (!ctx.ok) return ctx;
+
+  const { count, error } = await ctx.value.supabase
+    .from("tasks")
+    .select("id", { count: "exact", head: true })
+    .eq("workspace_id", ctx.value.workspaceId)
+    .in("status", ["todo", "in_progress"])
+    .lt("created_at", startOfToday().toISOString());
+
+  if (error) {
+    return err({ code: "DB_ERROR", message: error.message });
+  }
+
+  return ok(count ?? 0);
+});
 
 /** A single task by id, scoped to the caller's workspace. */
 export async function getTaskById(taskId: string): Promise<Result<Task>> {
