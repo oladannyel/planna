@@ -26,7 +26,13 @@ export default defineConfig({
       },
       exclude: [
         "node_modules/",
+        // Any Next build output. `.next` is the dev server's; `build:check`
+        // and ad-hoc verification builds use sibling `.next-*` directories,
+        // and a build artifact left out of this list lands in the coverage
+        // denominator and sinks the gate without a single test failing.
         ".next/**",
+        ".next-*/**",
+        "**/.next-*/**",
         "coverage/**",
         // Guard against a TailAdmin reference clone being checked out here
         // again. The design system was ported from it and the directory has
