@@ -2,7 +2,13 @@ import type { NextRequest } from "next/server";
 
 import { updateSession } from "@/lib/supabase/middleware";
 
-export function middleware(request: NextRequest) {
+/**
+ * Renamed from `middleware` in Next 16: the convention is now `proxy`, which
+ * runs on the Node.js runtime. plAnna never used the edge runtime here — it
+ * refreshes the Supabase session cookie and gates private routes — so the
+ * rename is behaviour-preserving.
+ */
+export function proxy(request: NextRequest) {
   return updateSession(request);
 }
 

@@ -47,7 +47,7 @@ function applyTheme(resolved: ResolvedTheme): void {
   root.style.colorScheme = resolved;
 }
 
-export function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element {
+export function ThemeProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   // Initialised from storage on the client. The inline script has already put
   // the right class on <html>, so this only syncs React to that reality.
   const [theme, setThemeState] = useState<ThemePreference>(DEFAULT_THEME);

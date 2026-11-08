@@ -6,9 +6,10 @@ import { bucketByDay, resolveWeekStart, shiftWeek, weekDays } from "@/features/w
 export default async function WeeklyPage({
   searchParams,
 }: {
-  searchParams: { week?: string | string[] };
+  searchParams: Promise<{ week?: string | string[] }>;
 }) {
-  const weekParam = typeof searchParams.week === "string" ? searchParams.week : undefined;
+  const { week } = await searchParams;
+  const weekParam = typeof week === "string" ? week : undefined;
   const weekStart = resolveWeekStart(weekParam, new Date());
   const days = weekDays(weekStart);
   const start = days[0]?.date ?? weekStart;

@@ -8,10 +8,9 @@ import type { Database } from "@/types/database";
  * Server-side Supabase client bound to the request cookie store.
  * Use inside Server Components, Server Actions, and Route Handlers.
  */
-export function createServerSupabaseClient() {
-  // In Next.js 14 `cookies()` is synchronous. Call sites may still `await` the
-  // returned client harmlessly, keeping them forward-compatible with Next 15+.
-  const cookieStore = cookies();
+export async function createServerSupabaseClient() {
+  // `cookies()` is async from Next 15 and synchronous access was removed in 16.
+  const cookieStore = await cookies();
 
   return createServerClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,

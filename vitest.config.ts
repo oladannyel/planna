@@ -26,7 +26,7 @@ export default defineConfig({
       },
       exclude: [
         "node_modules/",
-        // Any Next build output. `.next` is the dev server's; `build:check`
+        // Any Next build output. Build artefacts in the coverage denominator
         // and ad-hoc verification builds use sibling `.next-*` directories,
         // and a build artifact left out of this list lands in the coverage
         // denominator and sinks the gate without a single test failing.

@@ -21,7 +21,7 @@ function mockMatchMedia(prefersDark: boolean): void {
   });
 }
 
-function Probe(): JSX.Element {
+function Probe(): React.JSX.Element {
   const { theme, resolvedTheme, setTheme } = useTheme();
   return (
     <div>

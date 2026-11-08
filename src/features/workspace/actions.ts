@@ -17,7 +17,7 @@ const POSTGRES_UNIQUE_VIOLATION = "23505";
  * a generated unique slug on first login. Returns the workspace id + slug.
  */
 export async function ensureWorkspace(): Promise<Result<WorkspaceRef>> {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
   const {
     data: { user },

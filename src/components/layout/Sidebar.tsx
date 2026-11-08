@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
 import { useSidebar } from "./SidebarProvider";
 import { NAV_GROUPS, NAV_ITEMS } from "./nav-items";
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }): JSX.Element {
+function NavLinks({ onNavigate }: { onNavigate?: () => void }): React.JSX.Element {
   const pathname = usePathname();
   const { showLabels } = useSidebar();
 
@@ -85,7 +85,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }): JSX.Element {
   );
 }
 
-function SidebarBrand({ workspaceName }: { workspaceName: string }): JSX.Element {
+function SidebarBrand({ workspaceName }: { workspaceName: string }): React.JSX.Element {
   const { showLabels } = useSidebar();
 
   return (

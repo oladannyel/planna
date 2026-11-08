@@ -47,7 +47,7 @@ jobs:
         run: pnpm test
 
       - name: Build
-        run: pnpm build:check
+        run: pnpm build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key

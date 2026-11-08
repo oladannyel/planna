@@ -1,8 +1,8 @@
 # Files the Vercel CLI should not upload.
 #
-# Vercel excludes `.next` and `node_modules` by default, but not the sibling
-# build directories `build:check` and local verification runs create — and an
-# unignored one gets uploaded in full. `.next-build` alone was 252 MB.
+# Vercel excludes `.next` and `node_modules` by default, but not sibling build
+# directories a local verification run might create — and an unignored one gets
+# uploaded in full. A stray `.next-build` once made this upload 252 MB.
 #
 # None of this is needed remotely: Vercel installs dependencies and builds
 # from source.

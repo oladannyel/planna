@@ -3,7 +3,7 @@ import { err, ok } from "@/lib/result";
 import type { Result } from "@/lib/result";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export type ServerSupabaseClient = ReturnType<typeof createServerSupabaseClient>;
+export type ServerSupabaseClient = Awaited<ReturnType<typeof createServerSupabaseClient>>;
 
 export interface AuthedContext {
   supabase: ServerSupabaseClient;
@@ -23,7 +23,7 @@ export interface AuthedContext {
 export const getAuthedContext = requestMemo(async function getAuthedContext(): Promise<
   Result<AuthedContext>
 > {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
   const {
     data: { user },

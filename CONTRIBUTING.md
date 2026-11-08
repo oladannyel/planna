@@ -23,14 +23,13 @@ Four gates. All four must be green before a pull request can merge, and CI runs 
 pnpm typecheck     # tsc --noEmit, strict mode
 pnpm lint          # eslint, --max-warnings 0
 pnpm test          # vitest with coverage
-pnpm build:check   # next build, into its own directory
+pnpm build         # production build
 ```
 
-Use `build:check`, not `build`, while a dev server is running. The two share
-`.next` by default, and a build run alongside `next dev` leaves the dev server
-serving HTML where its stylesheet should be — the app renders completely
-unstyled with no error reported anywhere. `build:check` builds into
-`.next-build` instead, so it cannot interfere.
+Next 16 gives `next dev` its own output directory (`.next/dev`), so a build
+and a running dev server no longer collide. Earlier versions shared `.next`,
+which silently served an unstyled app; plAnna carried a `build:check` script
+for that, now removed.
 
 Run them locally before you push. A Husky pre-commit hook runs lint-staged on staged files, but it is a convenience, not a substitute.
 

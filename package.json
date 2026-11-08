@@ -26,17 +26,15 @@
     "openrouter"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=20.9"
   },
   "packageManager": "pnpm@9.15.9",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:check": "NEXT_DIST_DIR=.next-build next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
-    "lint:next": "next lint",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "format": "prettier --write .",
@@ -56,10 +54,10 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "lucide-react": "^1.20.0",
-    "next": "14.2.35",
+    "next": "16.4.5",
     "openai": "^6.42.0",
-    "react": "^18",
-    "react-dom": "^18",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "recharts": "^3.8.1",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.6.7"
@@ -70,8 +68,8 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20",
     "@types/pg": "^8.20.0",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@typescript-eslint/eslint-plugin": "^8.61.1",
     "@typescript-eslint/parser": "^8.61.1",
     "@vitejs/plugin-react": "^5.2.0",
@@ -90,5 +88,12 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
     "vitest": "^3.2.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "browserslist": ">=4.28.7",
+      "baseline-browser-mapping": ">=2.11.0",
+      "source-map-js": ">=1.2.2"
+    }
   }
 }

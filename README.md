@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/oladannyel/planna/actions/workflows/ci.yml/badge.svg)](https://github.com/oladannyel/planna/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript)](https://www.typescriptlang.org)
 
 ---
@@ -48,7 +48,7 @@ tokens in [`tailwind.config.ts`](tailwind.config.ts) and
 
 ## Tech stack
 
-- **[Next.js 14](https://nextjs.org)** (App Router, Server Actions, React Server Components)
+- **[Next.js 16](https://nextjs.org)** (App Router, Server Actions, React Server Components, Turbopack)
 - **TypeScript** in strict mode
 - **[Supabase](https://supabase.com)** — Postgres, Auth (Google OAuth), and Row Level Security on every table
 - **[Tailwind CSS](https://tailwindcss.com)** + **[Radix UI](https://www.radix-ui.com)** primitives
@@ -60,7 +60,7 @@ tokens in [`tailwind.config.ts`](tailwind.config.ts) and
 
 ### Prerequisites
 
-- **Node.js 20+** (developed on 24 LTS)
+- **Node.js 20.9+** (developed on 24 LTS)
 - **pnpm 9+** — `npm i -g pnpm`
 - A free **[Supabase](https://supabase.com)** project
 - An API key for any OpenAI-compatible model provider — a free **[OpenRouter](https://openrouter.ai)** key is the default, and costs nothing

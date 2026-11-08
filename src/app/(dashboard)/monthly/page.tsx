@@ -21,9 +21,10 @@ import { getTasks } from "@/features/tasks/queries";
 export default async function MonthlyPage({
   searchParams,
 }: {
-  searchParams: { month?: string | string[] };
+  searchParams: Promise<{ month?: string | string[] }>;
 }) {
-  const param = typeof searchParams.month === "string" ? searchParams.month : undefined;
+  const { month } = await searchParams;
+  const param = typeof month === "string" ? month : undefined;
   const ref = resolveMonth(param, new Date());
 
   const result = await getTasks();

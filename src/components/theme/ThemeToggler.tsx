@@ -10,7 +10,7 @@ import { useTheme } from "./ThemeProvider";
  * Light/dark switch. Renders the icon for the theme it will switch *to*, which
  * is the convention users expect from a single-button toggle.
  */
-export function ThemeToggler({ className }: { className?: string }): JSX.Element {
+export function ThemeToggler({ className }: { className?: string }): React.JSX.Element {
   const { resolvedTheme, toggleTheme } = useTheme();
   const nextTheme = resolvedTheme === "dark" ? "light" : "dark";
 

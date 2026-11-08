@@ -42,19 +42,29 @@ next-env.d.ts
 # dev server logs
 *.log
 
-# internal build/planning notes (kept locally, not published)
-phase*.md
-parser_fix.md
-task-scheduling-plan.md
-PLANNA_BUILD_SPEC.md
+# ─── Working notes stay local ─────────────────────────────────────────────────
+# Root-level Markdown is ignored by DEFAULT, and the published documents are
+# re-included one by one below. Planning docs, specs, scratch notes and
+# progress trackers are therefore private automatically — nobody has to
+# remember to add the next one, and a new file cannot leak by being forgotten.
+#
+# Adding a genuinely public root document is a deliberate act: add a `!` line.
+/*.md
+!/README.md
+!/CHANGELOG.md
+!/CONTRIBUTING.md
+!/CODE_OF_CONDUCT.md
+!/SECURITY.md
+!/THIRD_PARTY_NOTICES.md
+
+# Private notes anywhere in the tree.
+/notes/
+**/*.private.md
+**/*.local.md
 
 # TailAdmin reference clone, if one is checked out here again
 # (the design system was ported from it; see THIRD_PARTY_NOTICES.md)
 free-nextjs-admin-dashboard/
-
-# UI redesign planning docs (local tracking, untracked per D2)
-PLANNA_UI_MASTERPLAN.md
-PROGRESS.md
 
 # local supabase + env backups
 .env.local.hosted-backup

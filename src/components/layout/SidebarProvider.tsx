@@ -20,7 +20,7 @@ interface SidebarContextValue {
 
 const SidebarContext = createContext<SidebarContextValue | null>(null);
 
-export function SidebarProvider({ children }: { children: React.ReactNode }): JSX.Element {
+export function SidebarProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [collapsed, setCollapsed] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
