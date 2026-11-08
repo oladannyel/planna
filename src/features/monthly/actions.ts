@@ -8,6 +8,7 @@ import { monthlyStats } from "@/features/analytics/metrics";
 import { TASK_COLUMNS } from "@/features/tasks/columns";
 import { rowToTask } from "@/features/tasks/mappers";
 import { getAuthedContext } from "@/features/workspace/queries";
+import { classifyProviderError } from "@/lib/ai-errors";
 import { env } from "@/lib/env";
 import { getOpenRouter } from "@/lib/openrouter";
 import { err, ok } from "@/lib/result";
@@ -95,6 +96,8 @@ export async function generateMonthlySummary(
     });
     narrative = response.choices[0]?.message?.content ?? narrative;
   } catch (cause) {
+    const classified = classifyProviderError(cause);
+    if (classified) return err(classified);
     return err({ code: "AI_ERROR", message: "Monthly summary generation failed", cause });
   }
 

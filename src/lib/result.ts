@@ -8,6 +8,7 @@ export const err = <E>(error: E): Err<E> => ({ ok: false, error });
 export type AppError =
   | { code: "DB_ERROR"; message: string; cause?: unknown }
   | { code: "AI_ERROR"; message: string; cause?: unknown }
+  | { code: "AI_UNAVAILABLE"; message: string; cause?: unknown }
   | { code: "VALIDATION_ERROR"; message: string; fields?: Record<string, string[]> }
   | { code: "NOT_FOUND"; message: string }
   | { code: "UNAUTHORIZED"; message: string }

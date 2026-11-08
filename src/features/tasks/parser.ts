@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { classifyProviderError } from "@/lib/ai-errors";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { getOpenRouter } from "@/lib/openrouter";
@@ -154,6 +155,8 @@ export async function parseMultipleTasksFromText(
     return ok(mapParsedBlob(validated.data));
   } catch (cause) {
     logger.error("Task parsing failed", { cause, raw: raw.slice(0, 300) });
+    const classified = classifyProviderError(cause);
+    if (classified) return err(classified);
     return err({ code: "AI_ERROR", message: "Task parsing failed" });
   }
 }

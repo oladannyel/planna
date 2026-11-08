@@ -20,6 +20,10 @@ function errorMessage(error: AppError): string {
       return "Please sign in to add tasks.";
     case "AI_ERROR":
       return "Couldn't parse that — try adding manually.";
+    case "AI_UNAVAILABLE":
+      return "AI is unavailable right now — add manually, or check the AI settings.";
+    case "RATE_LIMIT":
+      return "AI is rate limited right now — wait a moment, or add manually.";
     case "VALIDATION_ERROR":
       return "That doesn't look like a valid task.";
     default:
