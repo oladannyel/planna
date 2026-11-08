@@ -55,6 +55,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
 
   useEffect(() => {
     const stored = readStoredTheme();
+    /*
+     * localStorage does not exist during SSR, so the stored preference cannot
+     * seed useState without a hydration mismatch. This is the rule's own "read
+     * from an external system" case; it cannot tell, because the read is
+     * synchronous. There is no flash — the pre-paint script in theme-script.ts
+     * has already put the right class on <html>; this only catches React up.
+     */
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setThemeState(stored);
     const resolved = resolveTheme(stored);
     setResolvedTheme(resolved);

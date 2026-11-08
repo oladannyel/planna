@@ -59,6 +59,13 @@ export function useChartPalette(): ChartPalette {
   const [palette, setPalette] = useState<ChartPalette>(FALLBACK);
 
   useEffect(() => {
+    /*
+     * The palette is read from live CSS custom properties via getComputedStyle,
+     * which is only meaningful once the DOM carries the new theme class.
+     * Reading earlier returns the previous theme's colours. Recharts takes
+     * colours as props rather than classes, so it cannot follow CSS itself.
+     */
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPalette(readChartPalette());
   }, [resolvedTheme]);
 

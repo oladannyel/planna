@@ -27,6 +27,11 @@ export function SidebarProvider({ children }: { children: React.ReactNode }): Re
 
   useEffect(() => {
     try {
+      /*
+       * The persisted preference lives in localStorage, which is unavailable
+       * during SSR, so it cannot seed useState without a hydration mismatch.
+       */
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCollapsed(window.localStorage.getItem(STORAGE_KEY) === "true");
     } catch {
       // Storage unavailable — the default expanded state is fine.

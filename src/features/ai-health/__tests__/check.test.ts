@@ -67,7 +67,7 @@ describe("checkKey", () => {
 
   it("treats a network failure as a dead key", async () => {
     const result = await checkKey(
-      vi.fn((...[]: FetchArgs) => Promise.reject(new Error("socket hang up"))),
+      vi.fn((..._args: FetchArgs) => Promise.reject(new Error("socket hang up"))),
     );
     expect(result).toMatchObject({ alive: false, status: 0, detail: "socket hang up" });
   });

@@ -19,8 +19,15 @@ export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElemen
   );
 }
 
-export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn("font-display text-title-sm font-semibold", className)} {...props} />;
+export function CardTitle({ className, children, ...props }: HTMLAttributes<HTMLHeadingElement>) {
+  // `children` is destructured rather than spread so that the heading's
+  // content is statically visible — a spread-only heading reads to linters,
+  // and to a screen reader if a caller ever omits children, as an empty one.
+  return (
+    <h3 className={cn("font-display text-title-sm font-semibold", className)} {...props}>
+      {children}
+    </h3>
+  );
 }
 
 export function CardDescription({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
