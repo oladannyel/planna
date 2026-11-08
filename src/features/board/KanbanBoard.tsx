@@ -33,8 +33,14 @@ function byRecentActivity(a: Task, b: Task): number {
   return bTime - aTime;
 }
 
-export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
-  const { tasks, setTasks } = useTasks(initialTasks);
+export function KanbanBoard({
+  initialTasks,
+  workspaceId,
+}: {
+  initialTasks: Task[];
+  workspaceId?: string;
+}) {
+  const { tasks, setTasks } = useTasks(initialTasks, workspaceId);
   const [filter, setFilter] = useState<BoardFilter>(null);
 
   const sensors = useSensors(

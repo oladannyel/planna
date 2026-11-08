@@ -23,11 +23,28 @@ function reduce(prev: Task[], payload: RealtimePostgresChangesPayload<TaskRow>):
  * Local task state seeded from the server, kept live via a Supabase realtime
  * subscription on the `tasks` table. `setTasks` enables optimistic updates.
  *
+ * Two things keep this in step with the server, and both are needed:
+ *
+ * 1. `initialTasks` is re-adopted whenever the server sends a new list. Every
+ *    task mutation calls `revalidatePath`, so a fresh prop identity means the
+ *    server has re-rendered with authoritative data. Seeding `useState` once
+ *    and never looking again is why newly created tasks did not appear until
+ *    a manual reload — the RSC payload updated, the component ignored it.
+ *    This is React's documented "adjust state during render" pattern, which
+ *    re-renders before paint rather than flashing stale data like an effect.
+ *
+ * 2. The realtime subscription, for changes this browser did not make.
+ *
  * The subscription is scoped to one workspace. Row Level Security already
  * prevents another workspace's rows reaching this client, so the filter is
  * not what makes this safe — it avoids asking the server to evaluate RLS for
  * events this client could never use, and keeps the channel name distinct
  * per workspace so two subscriptions cannot collide.
+ *
+ * Pass `workspaceId` explicitly. Inferring it from `initialTasks[0]` cannot
+ * work on an empty board: with no rows there is no id, so no subscription was
+ * ever opened, and the first task created in a fresh workspace — exactly when
+ * a user is most likely to be watching — never arrived.
  */
 export function useTasks(
   initialTasks: Task[],
@@ -37,9 +54,15 @@ export function useTasks(
   setTasks: (next: Task[]) => void;
 } {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [seed, setSeed] = useState<Task[]>(initialTasks);
 
-  // Fall back to the seed data's workspace when none is passed, so existing
-  // call sites keep working without threading the id through every component.
+  if (seed !== initialTasks) {
+    setSeed(initialTasks);
+    setTasks(initialTasks);
+  }
+
+  // Fall back to the seed data's workspace when none is passed, so call sites
+  // that have not been updated keep the behaviour they had.
   const scopeId = workspaceId ?? initialTasks[0]?.workspaceId;
 
   useEffect(() => {
