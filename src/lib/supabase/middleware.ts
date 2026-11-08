@@ -11,11 +11,16 @@ const PUBLIC_PREFIXES = [
   "/auth",
   "/request", // public request form
   "/api/request", // public request ingestion (service-role, slug-validated)
+  // Scheduled jobs. These carry no session cookie, so session gating would
+  // bounce them to /login and the job would silently never run. They
+  // authenticate themselves with a bearer CRON_SECRET instead, and refuse to
+  // run when it is unset.
+  "/api/cron",
   "/_next",
   "/favicon.ico",
 ];
 
-function isPublicPath(pathname: string): boolean {
+export function isPublicPath(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
