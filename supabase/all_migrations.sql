@@ -1,9 +1,10 @@
--- plAnna combined migrations (0001 + 0002 + 0003)
--- Paste into Supabase Dashboard → SQL Editor → Run. Safe to run once on a fresh project.
+-- plAnna — complete schema, generated from supabase/migrations/ on 2026-11-08.
+-- Apply to a fresh Supabase project: paste into SQL Editor and run once.
+-- Equivalent to `supabase db push`; prefer that when the CLI is linked.
 
--- ======================================================================
--- migrations/0001_initial_schema.sql
--- ======================================================================
+-- ─────────────────────────────────────────────────────────────────────────
+-- 0001_initial_schema.sql
+-- ─────────────────────────────────────────────────────────────────────────
 -- Enable UUID generation
 create extension if not exists "pgcrypto";
 
@@ -123,9 +124,9 @@ begin
 end;
 $$;
 
--- ======================================================================
--- migrations/0002_rls_policies.sql
--- ======================================================================
+-- ─────────────────────────────────────────────────────────────────────────
+-- 0002_rls_policies.sql
+-- ─────────────────────────────────────────────────────────────────────────
 -- ─── Row Level Security ───────────────────────────────────────────────────────
 alter table workspaces       enable row level security;
 alter table tasks             enable row level security;
@@ -169,9 +170,9 @@ create policy "ethics_questions_owner" on ethics_questions
     workspace_id in (select id from workspaces where owner_id = auth.uid())
   );
 
--- ======================================================================
--- migrations/0003_monthly_summary.sql
--- ======================================================================
+-- ─────────────────────────────────────────────────────────────────────────
+-- 0003_monthly_summary.sql
+-- ─────────────────────────────────────────────────────────────────────────
 -- ─── MONTHLY / ANALYTICS PERFORMANCE ──────────────────────────────────────────
 -- The monthly_summaries table itself is created in 0001 so that 0002 can attach
 -- its RLS policy. This migration adds the supporting indexes the monthly view
@@ -184,10 +185,9 @@ create index if not exists tasks_workspace_completed_idx
 create index if not exists monthly_summaries_workspace_period_idx
   on monthly_summaries(workspace_id, year, month);
 
-
--- ======================================================================
--- migrations/0004_ethics.sql
--- ======================================================================
+-- ─────────────────────────────────────────────────────────────────────────
+-- 0004_ethics.sql
+-- ─────────────────────────────────────────────────────────────────────────
 -- ─── ETHICS REFLECTIONS ───────────────────────────────────────────────────────
 -- Reflection answers live in weekly_reports.ethics_answers. Allow a row to exist
 -- for a week before a report narrative is generated (ethics-only check-ins).
@@ -197,15 +197,52 @@ alter table weekly_reports alter column narrative drop not null;
 create index if not exists weekly_reports_workspace_week_idx
   on weekly_reports(workspace_id, week_start desc);
 
-
--- ======================================================================
--- migrations/0005_due_at.sql
--- ======================================================================
+-- ─────────────────────────────────────────────────────────────────────────
+-- 0005_due_at.sql
+-- ─────────────────────────────────────────────────────────────────────────
+-- 0005_due_at.sql
 -- Add a precise timestamp deadline alongside the date-only due_date.
+-- due_at is the source of truth for the deadline and the on-time metric;
+-- due_date is kept (derived from due_at) for calendar/weekly grouping & range queries.
+
 alter table tasks add column if not exists due_at timestamptz;
 
+-- Backfill: existing date-only deadlines become end-of-day timestamps.
 update tasks
 set due_at = (due_date::timestamptz + interval '23 hours 59 minutes 59 seconds')
 where due_at is null and due_date is not null;
 
 create index if not exists tasks_workspace_due_at_idx on tasks(workspace_id, due_at);
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- 0006_realtime_publication.sql
+-- ─────────────────────────────────────────────────────────────────────────
+-- Enable Supabase Realtime for the tasks table.
+--
+-- `useTasks` subscribes to postgres_changes on `tasks`, but no migration ever
+-- added the table to the supabase_realtime publication, so the subscription
+-- has never received an event: the board only updated on reload and on
+-- optimistic local writes. Declaring it here means a fresh clone behaves the
+-- same as any other environment, instead of depending on someone having
+-- clicked the right toggle in the dashboard.
+--
+-- Idempotent: adding a table already in the publication raises an error, so
+-- the membership is checked first.
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'tasks'
+  ) then
+    alter publication supabase_realtime add table public.tasks;
+  end if;
+end $$;
+
+-- REPLICA IDENTITY FULL so DELETE events carry the old row. Without it,
+-- `payload.old` holds only the primary key, and the client cannot tell which
+-- workspace a deleted task belonged to — which the workspace filter needs.
+alter table public.tasks replica identity full;
+
