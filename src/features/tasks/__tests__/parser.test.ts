@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const h = vi.hoisted(() => ({ create: vi.fn() }));
 
 // Mock the lazy OpenRouter accessor used by the parser.
-vi.mock("@/lib/openrouter", () => ({
-  getOpenRouter: () => ({ chat: { completions: { create: h.create } } }),
+vi.mock("@/lib/ai-client", () => ({
+  getAiClient: () => ({ chat: { completions: { create: h.create } } }),
 }));
 
 const { parseMultipleTasksFromText, parseTaskFromText } = await import("../parser");

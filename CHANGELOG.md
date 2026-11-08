@@ -4,6 +4,32 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Provider-neutral model configuration.** `AI_BASE_URL`, `AI_API_KEY`,
+  `AI_MODEL` and `AI_REPORT_MODEL` point plAnna at any OpenAI-compatible
+  provider — OpenRouter, OpenAI, Groq, Together, or a local Ollama server. The
+  previous `OPENROUTER_*` names are still accepted, so upgrading breaks nothing.
+- **Daily model health check** at `/api/cron/ai-health`, run by Vercel Cron. It
+  separates the three upstream failures that look identical from inside the
+  app: a revoked key (401), a retired model (404), and a busy free pool (429).
+  Authenticated with `CRON_SECRET`, and refuses to run without it.
+
+### Fixed
+
+- **New tasks appear on the board without a reload.** `useTasks` seeded its
+  state from the server once and ignored every later update, and its realtime
+  subscription never opened on an empty board because it inferred the workspace
+  from a task row that did not exist yet.
+- **Upstream AI failures are no longer reported as parse failures.** A revoked
+  key surfaced to the user as "Couldn't parse that — try adding manually",
+  blaming their input for a credentials fault.
+- **Scheduled jobs are not redirected to the login page.** The session gate
+  treated cron requests as logged-out visitors and answered 307, which a cron
+  runner reads as success.
+
 ## [1.0.0] — 2026-11-05
 
 First public release. plAnna has been in daily personal use before this point;

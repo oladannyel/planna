@@ -13,9 +13,12 @@ export interface ModelHealth {
 }
 
 export interface KeyHealth {
+  /** False only when the provider actively rejected the key. */
   alive: boolean;
   status: number;
   detail?: string;
+  /** True when this provider exposes no endpoint to check a key against. */
+  skipped?: boolean;
 }
 
 export interface HealthReport {
@@ -41,16 +44,36 @@ const PROBE_PROMPT = 'Reply with exactly: {"ok":true}';
 
 /** Models worth probing — deduplicated, since both settings often agree. */
 export function configuredModels(): string[] {
-  return [...new Set([env.OPENROUTER_FREE_MODEL, env.OPENROUTER_REPORT_MODEL])];
+  return [...new Set([env.AI_MODEL, env.AI_REPORT_MODEL])];
 }
 
-/** Is the API key itself still valid? A dead key makes every model look dead. */
+/**
+ * Is the API key itself still valid? A dead key makes every model look dead,
+ * so checking it first turns a confusing wall of failures into one answer.
+ *
+ * `GET /key` is an OpenRouter extension, not part of the OpenAI-compatible
+ * surface. Pointed at OpenAI, Groq, Together or a local Ollama it simply 404s,
+ * and treating that as a dead key would report every other provider as broken.
+ * So a 404 or 405 here means "this provider has no such endpoint" and the
+ * verdict is deferred to the model probes, which exercise the key anyway.
+ *
+ * 401 and 403 are still trusted: those are the provider rejecting the key.
+ */
 export async function checkKey(fetchImpl: typeof fetch = fetch): Promise<KeyHealth> {
   try {
-    const response = await fetchImpl(`${env.OPENROUTER_BASE_URL}/key`, {
-      headers: { Authorization: `Bearer ${env.OPENROUTER_API_KEY}` },
+    const response = await fetchImpl(`${env.AI_BASE_URL}/key`, {
+      headers: { Authorization: `Bearer ${env.AI_API_KEY}` },
     });
     if (response.ok) return { alive: true, status: response.status };
+
+    if (response.status === 404 || response.status === 405) {
+      return {
+        alive: true,
+        status: response.status,
+        skipped: true,
+        detail: "Provider has no key endpoint — judged by the model probes instead",
+      };
+    }
 
     const body: unknown = await response.json().catch(() => null);
     return {
@@ -69,10 +92,10 @@ export async function checkModel(
   fetchImpl: typeof fetch = fetch,
 ): Promise<ModelHealth> {
   try {
-    const response = await fetchImpl(`${env.OPENROUTER_BASE_URL}/chat/completions`, {
+    const response = await fetchImpl(`${env.AI_BASE_URL}/chat/completions`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
+        Authorization: `Bearer ${env.AI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

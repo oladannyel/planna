@@ -8,9 +8,9 @@ import { monthlyStats } from "@/features/analytics/metrics";
 import { TASK_COLUMNS } from "@/features/tasks/columns";
 import { rowToTask } from "@/features/tasks/mappers";
 import { getAuthedContext } from "@/features/workspace/queries";
+import { getAiClient } from "@/lib/ai-client";
 import { classifyProviderError } from "@/lib/ai-errors";
 import { env } from "@/lib/env";
-import { getOpenRouter } from "@/lib/openrouter";
 import { err, ok } from "@/lib/result";
 import type { Result } from "@/lib/result";
 import type { Json } from "@/types/database";
@@ -88,8 +88,8 @@ export async function generateMonthlySummary(
 
   let narrative = "Summary unavailable.";
   try {
-    const response = await getOpenRouter().chat.completions.create({
-      model: env.OPENROUTER_REPORT_MODEL,
+    const response = await getAiClient().chat.completions.create({
+      model: env.AI_REPORT_MODEL,
       max_tokens: 1500,
       temperature: 0.4,
       messages: [{ role: "user", content: buildPrompt(year, month, stats) }],

@@ -75,8 +75,8 @@ vi.mock("@/features/workspace/queries", () => ({
 vi.mock("@/features/monthly/actions", () => ({
   generateMonthlySummary: (...args: unknown[]) => h.generateMonthlySummary(...args),
 }));
-vi.mock("@/lib/openrouter", () => ({
-  getOpenRouter: () => ({
+vi.mock("@/lib/ai-client", () => ({
+  getAiClient: () => ({
     chat: {
       completions: {
         create: (...args: unknown[]) => {

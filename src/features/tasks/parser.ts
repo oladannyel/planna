@@ -1,9 +1,9 @@
 import { z } from "zod";
 
+import { getAiClient } from "@/lib/ai-client";
 import { classifyProviderError } from "@/lib/ai-errors";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
-import { getOpenRouter } from "@/lib/openrouter";
 import { err, ok } from "@/lib/result";
 import type { Result } from "@/lib/result";
 
@@ -117,8 +117,8 @@ export async function parseMultipleTasksFromText(
 
   let raw = "";
   try {
-    const response = await getOpenRouter().chat.completions.create({
-      model: env.OPENROUTER_FREE_MODEL,
+    const response = await getAiClient().chat.completions.create({
+      model: env.AI_MODEL,
       max_tokens: 2000,
       temperature: 0.1,
       messages: [

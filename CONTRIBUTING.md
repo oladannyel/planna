@@ -70,7 +70,7 @@ Migrations are ordered SQL files in `supabase/migrations/`, numbered sequentiall
 
 ## Tests
 
-The suite is 324 tests across 49 files, and new work is expected to keep it that way or better. Test behaviour, not implementation detail. Language-model calls are mocked — never let a test hit a live model or a real database.
+The suite is 478 tests across 61 files, and new work is expected to keep it that way or better. Test behaviour, not implementation detail. Language-model calls are mocked — never let a test hit a live model or a real database.
 
 ## Pull requests
 

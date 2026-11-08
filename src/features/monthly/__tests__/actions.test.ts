@@ -70,8 +70,8 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/features/workspace/queries", () => ({
   getAuthedContext: () => Promise.resolve(h.ctxResult.value),
 }));
-vi.mock("@/lib/openrouter", () => ({
-  getOpenRouter: () => ({
+vi.mock("@/lib/ai-client", () => ({
+  getAiClient: () => ({
     chat: {
       completions: {
         create: (...args: unknown[]) => {

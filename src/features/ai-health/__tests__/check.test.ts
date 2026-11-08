@@ -47,6 +47,24 @@ describe("checkKey", () => {
     expect(result.detail).toBe("User not found.");
   });
 
+  /**
+   * `GET /key` is an OpenRouter extension. Every other OpenAI-compatible
+   * provider 404s it, and calling that a dead key would report a perfectly
+   * healthy OpenAI or Ollama setup as broken.
+   */
+  it("defers to the model probes when the provider has no key endpoint", async () => {
+    for (const status of [404, 405]) {
+      const result = await checkKey(stubFetch(() => jsonResponse({}, status)));
+      expect(result).toMatchObject({ alive: true, skipped: true, status });
+    }
+  });
+
+  it("still trusts an explicit rejection over deferring", async () => {
+    const result = await checkKey(stubFetch(() => jsonResponse({ error: {} }, 403)));
+    expect(result.alive).toBe(false);
+    expect(result.skipped).toBeUndefined();
+  });
+
   it("treats a network failure as a dead key", async () => {
     const result = await checkKey(
       vi.fn((...[]: FetchArgs) => Promise.reject(new Error("socket hang up"))),
@@ -154,6 +172,17 @@ describe("runHealthCheck", () => {
     );
     expect(report.healthy).toBe(true);
     expect(report.models[0]?.verdict).toBe("degraded");
+  });
+
+  it("still probes models on a provider with no key endpoint", async () => {
+    const report = await runHealthCheck(
+      stubFetch((url) =>
+        url.endsWith("/key") ? jsonResponse({}, 404) : jsonResponse(completion("ok")),
+      ),
+    );
+    expect(report.key.skipped).toBe(true);
+    expect(report.healthy).toBe(true);
+    expect(report.models.every((m) => m.verdict === "ok")).toBe(true);
   });
 
   it("is unhealthy when a model is dead", async () => {

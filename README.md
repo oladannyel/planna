@@ -52,8 +52,8 @@ tokens in [`tailwind.config.ts`](tailwind.config.ts) and
 - **TypeScript** in strict mode
 - **[Supabase](https://supabase.com)** — Postgres, Auth (Google OAuth), and Row Level Security on every table
 - **[Tailwind CSS](https://tailwindcss.com)** + **[Radix UI](https://www.radix-ui.com)** primitives
-- **[OpenRouter](https://openrouter.ai)** for language-model calls (configured for free-tier models)
-- **[Vitest](https://vitest.dev)** + Testing Library + MSW — 429 tests
+- **Any OpenAI-compatible model provider** for language-model calls — [OpenRouter](https://openrouter.ai) free tier by default
+- **[Vitest](https://vitest.dev)** + Testing Library + MSW — 478 tests
 - **[Recharts](https://recharts.org)** for analytics, **[dnd-kit](https://dndkit.com)** for the board
 
 ## Quick start
@@ -63,7 +63,7 @@ tokens in [`tailwind.config.ts`](tailwind.config.ts) and
 - **Node.js 20+** (developed on 24 LTS)
 - **pnpm 9+** — `npm i -g pnpm`
 - A free **[Supabase](https://supabase.com)** project
-- A free **[OpenRouter](https://openrouter.ai)** API key
+- An API key for any OpenAI-compatible model provider — a free **[OpenRouter](https://openrouter.ai)** key is the default, and costs nothing
 
 ### 1. Clone and install
 
@@ -170,7 +170,42 @@ Each `features/*` folder follows the same shape: `schema.ts` (Zod), `queries.ts`
 - **Results, not thrown errors.** Fallible operations return a `Result` type (`src/lib/result.ts`) so failure is part of the signature.
 - **Security in the database.** Row Level Security policies in [`0002_rls_policies.sql`](supabase/migrations/0002_rls_policies.sql) are the authority on who can read what — the app layer is not the only gate.
 - **Validated environment.** `src/lib/env.ts` parses every variable through Zod at startup, so a misconfiguration fails loudly and immediately.
-- **Free-tier language models.** Model names are environment variables, not hardcoded, because free-tier model availability changes often. See [`.env.local.example`](.env.local.example).
+- **No model or provider lock-in.** plAnna talks plain OpenAI-compatible chat completions and uses no vendor-specific feature — no JSON mode, no tool calling, no structured outputs. The task parser asks for JSON in the prompt and tolerates a model that wraps it in a code fence or omits null keys, so small free models work. Point `AI_BASE_URL` at OpenRouter, OpenAI, Groq, Together, Fireworks, or a local Ollama / vLLM server, and set `AI_MODEL`. See [Swapping the model or provider](#swapping-the-model-or-provider).
+- **The AI configuration is watched.** A daily cron (`/api/cron/ai-health`) probes the key and every configured model, because free models are retired without notice and a revoked key looks exactly like a bad prompt from inside the app.
+
+## Swapping the model or provider
+
+plAnna is not tied to a model or a vendor. Four variables decide everything:
+
+| Variable          | What it does                                        |
+| ----------------- | --------------------------------------------------- |
+| `AI_BASE_URL`     | Any OpenAI-compatible `/chat/completions` endpoint  |
+| `AI_API_KEY`      | That provider's key                                 |
+| `AI_MODEL`        | The model that parses your notes into tasks         |
+| `AI_REPORT_MODEL` | The model that writes weekly and monthly narratives |
+
+```bash
+# OpenRouter free tier (the default — costs nothing)
+AI_BASE_URL=https://openrouter.ai/api/v1
+AI_MODEL=openrouter/free
+
+# OpenAI
+AI_BASE_URL=https://api.openai.com/v1
+AI_MODEL=gpt-4o-mini
+
+# Groq
+AI_BASE_URL=https://api.groq.com/openai/v1
+AI_MODEL=llama-3.3-70b-versatile
+
+# Local Ollama — no key leaves your machine
+AI_BASE_URL=http://localhost:11434/v1
+AI_API_KEY=ollama
+AI_MODEL=llama3.1
+```
+
+A provider that is **not** OpenAI-compatible — Anthropic's native API, Bedrock, Vertex — needs a gateway in front of it. Anything that speaks the OpenAI protocol works as-is.
+
+These were once named `OPENROUTER_*`. Those names still work, so upgrading breaks nothing, but the neutral ones are the documented set.
 
 ## Deployment
 
