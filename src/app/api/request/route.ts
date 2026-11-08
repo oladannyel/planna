@@ -30,6 +30,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
   }
 
+  if (result.error.code === "RATE_LIMIT") {
+    // 429 with Retry-After, so well-behaved clients back off instead of
+    // hammering an endpoint that is already refusing them.
+    return NextResponse.json(
+      { error: result.error.message },
+      { status: 429, headers: { "Retry-After": "3600" } },
+    );
+  }
+
   logger.error("Request ingestion failed", { error: result.error });
   return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
 }

@@ -10,29 +10,39 @@ const h = vi.hoisted(() => {
     value: { data: { id: "task-99" }, error: null },
   };
   const parseResult: { value: unknown } = { value: { ok: false, error: {} } };
+  const countResult: { value: { count: number | null; error: unknown } } = {
+    value: { count: 0, error: null },
+  };
   const insertArg = vi.fn();
+  const parseCalled = vi.fn();
 
   const builder: Record<string, unknown> = {
     select: () => builder,
     eq: () => builder,
+    gte: () => builder,
     maybeSingle: () => Promise.resolve(wsResult.value),
     single: () => Promise.resolve(insertResult.value),
     insert: (arg: unknown) => {
       insertArg(arg);
       return builder;
     },
+    // Awaiting the builder resolves the head/count query.
+    then: (resolve: (v: unknown) => unknown) => resolve(countResult.value),
   };
 
   const admin = { from: () => builder };
-  return { wsResult, insertResult, parseResult, insertArg, admin };
+  return { wsResult, insertResult, parseResult, countResult, insertArg, parseCalled, admin };
 });
 
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => h.admin }));
 vi.mock("@/features/tasks/parser", () => ({
-  parseTaskFromText: () => Promise.resolve(h.parseResult.value),
+  parseTaskFromText: () => {
+    h.parseCalled();
+    return Promise.resolve(h.parseResult.value);
+  },
 }));
 
-const { ingestRequest } = await import("../ingest");
+const { ingestRequest, REQUEST_HOURLY_LIMIT } = await import("../ingest");
 
 const input: RequestInputSchema = {
   slug: "demo",
@@ -47,7 +57,9 @@ beforeEach(() => {
   h.wsResult.value = { data: { id: "ws-1" }, error: null };
   h.insertResult.value = { data: { id: "task-99" }, error: null };
   h.parseResult.value = { ok: false, error: { code: "AI_ERROR", message: "x" } };
+  h.countResult.value = { count: 0, error: null };
   h.insertArg.mockReset();
+  h.parseCalled.mockReset();
 });
 
 describe("ingestRequest", () => {
@@ -108,5 +120,46 @@ describe("ingestRequest", () => {
     const result = await ingestRequest(input);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe("DB_ERROR");
+  });
+});
+
+/**
+ * Request links are unauthenticated by design, so this is the only path where
+ * a stranger can make the workspace owner spend money.
+ */
+describe("ingestRequest throttling", () => {
+  it("accepts a submission below the hourly limit", async () => {
+    h.countResult.value = { count: REQUEST_HOURLY_LIMIT - 1, error: null };
+    const result = await ingestRequest(input);
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects a submission once the workspace is at its hourly limit", async () => {
+    h.countResult.value = { count: REQUEST_HOURLY_LIMIT, error: null };
+    const result = await ingestRequest(input);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("RATE_LIMIT");
+  });
+
+  /** The expensive half of the attack: rejecting after the call is too late. */
+  it("refuses before spending a model call", async () => {
+    h.countResult.value = { count: REQUEST_HOURLY_LIMIT, error: null };
+    await ingestRequest(input);
+    expect(h.parseCalled).not.toHaveBeenCalled();
+    expect(h.insertArg).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a failure to read the counter rather than failing open", async () => {
+    h.countResult.value = { count: null, error: { message: "counter down" } };
+    const result = await ingestRequest(input);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("DB_ERROR");
+    expect(h.parseCalled).not.toHaveBeenCalled();
+  });
+
+  it("treats a null count as zero rather than blocking everything", async () => {
+    h.countResult.value = { count: null, error: null };
+    const result = await ingestRequest(input);
+    expect(result.ok).toBe(true);
   });
 });

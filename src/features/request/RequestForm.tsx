@@ -7,6 +7,7 @@ import { FIELD_BASE } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { TASK_PRIORITIES, isTaskPriority } from "@/features/tasks/status";
 import type { TaskPriority } from "@/features/tasks/types";
+import type { AppError } from "@/lib/result";
 
 import { RequestSuccess } from "./RequestSuccess";
 import { submitRequest } from "./actions";
@@ -16,6 +17,24 @@ const URGENCIES = TASK_PRIORITIES;
 // The public request form shares the app's field chrome rather than keeping
 // its own copy, so the two cannot drift.
 const inputClass = FIELD_BASE;
+
+/**
+ * Tell the submitter what actually went wrong. A throttled or unknown link is
+ * not a validation problem, and saying "check the form" sends them off to
+ * re-read input that was fine.
+ */
+function submitErrorMessage(error: AppError): string {
+  switch (error.code) {
+    case "NOT_FOUND":
+      return "This request link is no longer valid.";
+    case "RATE_LIMIT":
+      return "This workspace has received a lot of requests just now. Please try again later.";
+    case "VALIDATION_ERROR":
+      return "Please check the form and try again.";
+    default:
+      return "Something went wrong sending your request. Please try again.";
+  }
+}
 
 export function RequestForm({ slug }: { slug: string }) {
   const [requesterName, setRequesterName] = useState("");
@@ -52,11 +71,7 @@ export function RequestForm({ slug }: { slug: string }) {
     if (result.ok) {
       setDone(true);
     } else {
-      setError(
-        result.error.code === "NOT_FOUND"
-          ? "This request link is no longer valid."
-          : "Please check the form and try again.",
-      );
+      setError(submitErrorMessage(result.error));
     }
   }
 

@@ -53,7 +53,7 @@ tokens in [`tailwind.config.ts`](tailwind.config.ts) and
 - **[Supabase](https://supabase.com)** — Postgres, Auth (Google OAuth), and Row Level Security on every table
 - **[Tailwind CSS](https://tailwindcss.com)** + **[Radix UI](https://www.radix-ui.com)** primitives
 - **Any OpenAI-compatible model provider** for language-model calls — [OpenRouter](https://openrouter.ai) free tier by default
-- **[Vitest](https://vitest.dev)** + Testing Library + MSW — 478 tests
+- **[Vitest](https://vitest.dev)** + Testing Library + MSW — 483 tests
 - **[Recharts](https://recharts.org)** for analytics, **[dnd-kit](https://dndkit.com)** for the board
 
 ## Quick start
@@ -169,6 +169,7 @@ Each `features/*` folder follows the same shape: `schema.ts` (Zod), `queries.ts`
 - **Server Actions over API routes.** Mutations are Server Actions, validated with Zod at the boundary. The only route handler is the public request endpoint.
 - **Results, not thrown errors.** Fallible operations return a `Result` type (`src/lib/result.ts`) so failure is part of the signature.
 - **Security in the database.** Row Level Security policies in [`0002_rls_policies.sql`](supabase/migrations/0002_rls_policies.sql) are the authority on who can read what — the app layer is not the only gate.
+- **The one unauthenticated path is capped.** Request links let anyone holding a slug file a task, which also spends a model call. Each workspace accepts 20 request-link submissions per hour, checked _before_ the model call so the expensive half of an abuse attempt never runs.
 - **Validated environment.** `src/lib/env.ts` parses every variable through Zod at startup, so a misconfiguration fails loudly and immediately.
 - **No model or provider lock-in.** plAnna talks plain OpenAI-compatible chat completions and uses no vendor-specific feature — no JSON mode, no tool calling, no structured outputs. The task parser asks for JSON in the prompt and tolerates a model that wraps it in a code fence or omits null keys, so small free models work. Point `AI_BASE_URL` at OpenRouter, OpenAI, Groq, Together, Fireworks, or a local Ollama / vLLM server, and set `AI_MODEL`. See [Swapping the model or provider](#swapping-the-model-or-provider).
 - **The AI configuration is watched.** A daily cron (`/api/cron/ai-health`) probes the key and every configured model, because free models are retired without notice and a revoked key looks exactly like a bad prompt from inside the app.

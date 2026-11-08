@@ -17,8 +17,23 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   app: a revoked key (401), a retired model (404), and a busy free pool (429).
   Authenticated with `CRON_SECRET`, and refuses to run without it.
 
+### Security
+
+- **Request links are rate limited.** The public `/api/request` endpoint is
+  unauthenticated by design and runs a language-model call per submission, so
+  anyone holding a workspace slug could spend the owner's AI quota and fill
+  their board. Each workspace now accepts 20 request-link submissions per
+  hour, checked before the model call. The HTTP endpoint answers `429` with
+  `Retry-After`.
+- **Upgraded `zod` to 4.6.7**, patching a high-severity memory-exhaustion
+  advisory that applied to validating oversized constrained collections —
+  reachable from that same unauthenticated endpoint.
+
 ### Fixed
 
+- **A throttled or unknown request link no longer reports as a form error.**
+  "Please check the form and try again" sent submitters to re-read input that
+  was fine.
 - **New tasks appear on the board without a reload.** `useTasks` seeded its
   state from the server once and ignored every later update, and its realtime
   subscription never opened on an empty board because it inferred the workspace
