@@ -1,6 +1,6 @@
 {
   "name": "planna",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "A to-do list that talks back: write one sentence about your day and plAnna turns it into a tracked Kanban board, then shows you where your attention actually went.",
   "license": "MIT",

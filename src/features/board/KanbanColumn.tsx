@@ -25,7 +25,7 @@ export function KanbanColumn({ status, label, tasks, maxVisible, archiveHref }: 
   return (
     <section
       ref={setNodeRef}
-      aria-label={`${label}, ${tasks.length} tasks`}
+      aria-label={`${label}, ${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`}
       className={cn(
         "flex w-[300px] shrink-0 snap-start flex-col transition-colors lg:w-auto lg:flex-1",
         // Columns are divided within one container rather than floating as

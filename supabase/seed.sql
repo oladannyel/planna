@@ -62,10 +62,58 @@ begin
     (demo_ws_id, 'What did I avoid that I should have faced?', 2)
   on conflict do nothing;
 
-  insert into tasks (workspace_id, title, description, status, priority, tags, source)
+  -- Enough tasks, spread over the past three weeks, that the analytics and
+  -- monthly views have something to plot on a fresh clone. Three rows all
+  -- created today left every chart empty and the board looking broken, which
+  -- is a poor first impression of a tool whose whole point is showing you
+  -- where your attention went.
+  insert into tasks (
+    workspace_id, title, description, status, priority, tags, source,
+    created_at, updated_at, completed_at, due_date, estimated_minutes
+  )
   values
-    (demo_ws_id, 'Draft Q3 planning doc', 'Outline goals and milestones', 'todo', 'high', array['planning'], 'manual'),
-    (demo_ws_id, 'Review onboarding flow', null, 'in_progress', 'medium', array['ux'], 'manual'),
-    (demo_ws_id, 'Ship landing page copy', null, 'done', 'medium', array['marketing'], 'manual')
+    -- To do
+    (demo_ws_id, 'Draft Q3 planning doc', 'Outline goals and milestones for the quarter.',
+     'todo', 'high', array['planning'], 'manual',
+     now() - interval '2 days', now() - interval '2 days', null, (now() + interval '2 days')::date, 90),
+    (demo_ws_id, 'Prepare board update', 'Pull the headline metrics into one slide.',
+     'todo', 'urgent', array['planning','exec'], 'manual',
+     now() - interval '1 day', now() - interval '1 day', null, (now() + interval '1 day')::date, 45),
+    (demo_ws_id, 'Rewrite the pricing page', 'The current copy buries the free tier.',
+     'todo', 'medium', array['marketing'], 'manual',
+     now() - interval '5 days', now() - interval '5 days', null, (now() + interval '4 days')::date, 120),
+    (demo_ws_id, 'Reply to the integration request', null,
+     'todo', 'low', array['support'], 'request_link',
+     now() - interval '3 days', now() - interval '3 days', null, null, 20),
+
+    -- In progress
+    (demo_ws_id, 'Review onboarding flow', 'Walk the whole signup path and note every drop-off.',
+     'in_progress', 'medium', array['ux'], 'manual',
+     now() - interval '4 days', now() - interval '6 hours', null, (now() + interval '1 day')::date, 60),
+    (demo_ws_id, 'Migrate the reporting job', 'Move the weekly rollup off the old scheduler.',
+     'in_progress', 'high', array['infra'], 'manual',
+     now() - interval '8 days', now() - interval '1 day', null, (now() + interval '3 days')::date, 240),
+
+    -- Done, spread across three weeks so the charts have a shape
+    (demo_ws_id, 'Ship landing page copy', null,
+     'done', 'medium', array['marketing'], 'manual',
+     now() - interval '6 days', now() - interval '5 days', now() - interval '5 days', (now() - interval '5 days')::date, 75),
+    (demo_ws_id, 'Fix the export timeout', 'CSV export dropped the last row on large datasets.',
+     'done', 'urgent', array['bug'], 'request_link',
+     now() - interval '9 days', now() - interval '8 days', now() - interval '8 days', (now() - interval '8 days')::date, 50),
+    (demo_ws_id, 'Instrument the signup funnel', null,
+     'done', 'high', array['analytics'], 'manual',
+     now() - interval '13 days', now() - interval '11 days', now() - interval '11 days', (now() - interval '12 days')::date, 180),
+    (demo_ws_id, 'Write the incident postmortem', 'What broke, why, and what changes.',
+     'done', 'high', array['infra','writing'], 'manual',
+     now() - interval '16 days', now() - interval '15 days', now() - interval '15 days', (now() - interval '15 days')::date, 110),
+    (demo_ws_id, 'Refresh the API docs', null,
+     'done', 'low', array['docs'], 'manual',
+     now() - interval '19 days', now() - interval '18 days', now() - interval '18 days', (now() - interval '17 days')::date, 95),
+
+    -- Cancelled
+    (demo_ws_id, 'Evaluate the analytics vendor', 'Dropped — the open-source option covers it.',
+     'cancelled', 'low', array['analytics'], 'manual',
+     now() - interval '11 days', now() - interval '10 days', null, null, null)
   on conflict do nothing;
 end $$;

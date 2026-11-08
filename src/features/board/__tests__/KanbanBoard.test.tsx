@@ -50,7 +50,8 @@ describe("KanbanBoard", () => {
     // Counts now appear in both the toolbar tabs and the column headers, so
     // assert against the column's accessible name rather than a bare "2".
     expect(screen.getByRole("region", { name: "To do, 2 tasks" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Done, 1 tasks" })).toBeInTheDocument();
+    // Singular, not "1 tasks" — this label is read aloud.
+    expect(screen.getByRole("region", { name: "Done, 1 task" })).toBeInTheDocument();
   });
 
   it("filters to a single column when a toolbar tab is chosen", async () => {

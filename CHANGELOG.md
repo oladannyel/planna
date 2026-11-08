@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] — 2026-11-09
 
 ### Added
 
@@ -16,6 +16,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   separates the three upstream failures that look identical from inside the
   app: a revoked key (401), a retired model (404), and a busy free pool (429).
   Authenticated with `CRON_SECRET`, and refuses to run without it.
+
+### Changed
+
+- **Next.js 16 and React 19.** Clears all 36 dependency advisories (3 critical,
+  17 high), none of which had a fix available on Next 14. Migrates the async
+  Request APIs, renames `middleware` to `proxy`, and drops the `NEXT_DIST_DIR`
+  workaround now that `next dev` has its own output directory.
+- **ESLint flat config** on ESLint 9, ahead of ESLint 10 dropping legacy config.
+- **A much richer seed.** A fresh `supabase db reset` now produces twelve tasks
+  spread over three weeks across all four statuses, so the board, analytics and
+  monthly views all have something to show on first run.
 
 ### Security
 
@@ -31,6 +42,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The task sheet could not be closed from a keyboard.** Its dismiss backdrop
+  was a `div` with an `onClick`, and there was no Escape handler. The backdrop
+  is now a real button, and Escape closes the sheet.
+- **Hydration mismatch on every board render.** `@dnd-kit` derives its
+  accessibility ids from a counter that restarts between server and client, so
+  every card hydrated with an `aria-describedby` pointing at an element absent
+  from the server HTML. `DndContext` now has an explicit id.
+- **`CardTitle` spread its children instead of rendering them**, so a caller
+  that omitted children produced a silently empty heading.
+- **A column holding one task announced "1 tasks"** to screen readers.
 - **A throttled or unknown request link no longer reports as a form error.**
   "Please check the form and try again" sent submitters to re-read input that
   was fine.

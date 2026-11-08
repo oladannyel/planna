@@ -67,8 +67,16 @@ export function KanbanBoard({
 
   const visibleColumns = filter ? COLUMNS.filter((c) => c.status === filter) : COLUMNS;
 
+  /*
+   * DndContext gets an explicit `id` because without one dnd-kit derives its
+   * accessibility ids from a counter that restarts on the server and on the
+   * client. Every card then hydrated with a mismatched `aria-describedby`
+   * pointing at an element absent from the server HTML — React warned about
+   * the tree on every board render.
+   */
+
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext id="planna-board" sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="surface overflow-hidden">
         <BoardToolbar tabs={tabs} active={filter} onSelect={setFilter} />
 

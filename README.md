@@ -7,6 +7,8 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript)](https://www.typescriptlang.org)
 
+![The plAnna board](docs/screenshots/board-dark.jpg)
+
 ---
 
 ## Why this exists
@@ -26,6 +28,20 @@ It was built for one person's daily work across many parallel projects. It gener
 | **Monthly & AI reports**     | Generated narrative summaries of a period's work, built from your own task history.                                                                                                      |
 | **Ethics check-in**          | A configurable reflection prompt set — the part of the tool that asks questions back.                                                                                                    |
 | **Request links**            | A public `/request/[slug]` link so colleagues can file a task into your board without an account.                                                                                        |
+
+## Screenshots
+
+|                                                                                                                |                                                                                          |
+| -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| ![Analytics](docs/screenshots/analytics-dark.jpg)                                                              | ![Daily view](docs/screenshots/daily-dark.jpg)                                           |
+| **Analytics** — on-time rate measured against real deadlines, throughput, cycle time and where attention went. | **Daily** — today's focus, with carry-over from previous days made impossible to ignore. |
+
+Light theme, same board:
+
+![The plAnna board in light theme](docs/screenshots/board-light.jpg)
+
+Every screenshot is the seeded demo workspace, which you get by running
+`supabase db reset` — see [Quick start](#quick-start).
 
 ## Design system
 
