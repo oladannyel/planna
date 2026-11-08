@@ -60,3 +60,4 @@ PROGRESS.md
 .env.local.hosted-backup
 supabase/.branches
 supabase/.temp
+.env*

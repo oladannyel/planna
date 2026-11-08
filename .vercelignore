@@ -1,0 +1,35 @@
+# Files the Vercel CLI should not upload.
+#
+# Vercel excludes `.next` and `node_modules` by default, but not the sibling
+# build directories `build:check` and local verification runs create — and an
+# unignored one gets uploaded in full. `.next-build` alone was 252 MB.
+#
+# None of this is needed remotely: Vercel installs dependencies and builds
+# from source.
+
+# Local build output
+.next
+.next-*
+
+# Test and coverage artefacts
+coverage
+*.tsbuildinfo
+
+# Local Supabase stack
+supabase/.branches
+supabase/.temp
+
+# Local env files (Vercel supplies its own)
+.env.local
+.env.local.*
+
+# Internal planning notes
+PLANNA_UI_MASTERPLAN.md
+PROGRESS.md
+phase*.md
+PLANNA_BUILD_SPEC.md
+parser_fix.md
+task-scheduling-plan.md
+
+# Logs
+*.log
