@@ -27,6 +27,15 @@ export default defineConfig({
       OPENROUTER_API_KEY: "test-openrouter-key",
       NEXT_PUBLIC_APP_URL: "http://localhost:3000",
     },
+    /*
+     * The Playwright specs live in e2e/ and match vitest's default `*.spec.ts`
+     * pattern, but they need a browser and a running app. Letting vitest
+     * collect them turns `pnpm test` red with an unhelpful message about
+     * test.describe() being called in the wrong place. They are run by
+     * `pnpm test:e2e`.
+     */
+    exclude: ["**/node_modules/**", "**/dist/**", "e2e/**"],
+
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
