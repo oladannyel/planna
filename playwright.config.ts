@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 
 import { defineConfig, devices } from "@playwright/test";
 
@@ -31,38 +31,61 @@ const PORT = Number(process.env.E2E_PORT ?? 3100);
 const baseURL = `http://localhost:${PORT}`;
 
 /**
- * Point the app at the local stack without touching the developer's own
- * `.env.local`, which on a working machine holds real project credentials.
+ * Point the app at the local stack, asking the Supabase CLI where it is.
+ *
+ * This used to read `.env.local.local-stack`, which worked on a machine that
+ * had one and failed instantly in CI — that file is gitignored, like every
+ * `.env*`, so it does not exist in a fresh checkout. Depending on an untracked
+ * file is a dependency on someone's laptop.
+ *
+ * `supabase status -o env` is the stack telling us its own ports and keys, so
+ * it is correct by construction, needs nothing committed, and cannot drift
+ * when the ports in `config.toml` change.
  *
  * Values passed here win: Next does not override variables already present in
- * the environment, so `.env.local` cannot drag the build back to a hosted
- * project. That matters for more than tidiness — `NEXT_PUBLIC_*` is inlined at
- * build time, so a build that picked up the wrong Supabase URL would run the
- * whole suite against someone's real data.
+ * the environment, so a developer's `.env.local` cannot drag the build back to
+ * a hosted project. That matters for more than tidiness — `NEXT_PUBLIC_*` is
+ * inlined at build time, so a build that picked up the wrong Supabase URL
+ * would run the whole suite against real data.
  */
 function localStackEnv(): Record<string, string> {
-  const path = ".env.local.local-stack";
   let raw: string;
   try {
-    raw = readFileSync(path, "utf8");
+    raw = execFileSync("supabase", ["status", "-o", "env"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
   } catch {
     throw new Error(
-      `${path} is missing. It holds the local Supabase credentials the e2e suite runs against — see e2e/README.md.`,
+      "Could not read the local Supabase stack. Run `supabase start && supabase db reset` first — see e2e/README.md.",
     );
   }
 
-  const env: Record<string, string> = {};
+  const status: Record<string, string> = {};
   for (const line of raw.split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq === -1) continue;
-    env[trimmed.slice(0, eq).trim()] = trimmed.slice(eq + 1).trim();
+    const match = line.match(/^([A-Z0-9_]+)="?([^"]*)"?$/);
+    if (match) status[match[1]!] = match[2]!;
   }
 
-  // The app is served on the e2e port, and the magic link must come back to it.
-  env.NEXT_PUBLIC_APP_URL = baseURL;
-  return env;
+  const required = ["API_URL", "ANON_KEY", "SERVICE_ROLE_KEY"] as const;
+  for (const key of required) {
+    if (!status[key]) {
+      throw new Error(`supabase status did not report ${key}. Is the stack running?`);
+    }
+  }
+
+  return {
+    NEXT_PUBLIC_SUPABASE_URL: status.API_URL!,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: status.ANON_KEY!,
+    SUPABASE_SERVICE_ROLE_KEY: status.SERVICE_ROLE_KEY!,
+    // `env.ts` requires a model provider key at startup. No test makes a model
+    // call — the request spec is the only path that would, and it is not
+    // exercised here — so a placeholder keeps the app booting without putting
+    // a real key anywhere near CI.
+    AI_API_KEY: "e2e-placeholder-model-provider-key",
+    // The app is served on the e2e port, and the magic link must come back to it.
+    NEXT_PUBLIC_APP_URL: baseURL,
+  };
 }
 
 export default defineConfig({

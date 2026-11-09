@@ -37,6 +37,14 @@ stack's mail catcher, on `54424`), and follow it. That exercises the same
 `/auth/callback` code exchange Google uses, so the path that matters is
 covered either way.
 
+## Configuration
+
+The suite asks the Supabase CLI where the stack is (`supabase status -o env`)
+rather than reading an env file. It used to read `.env.local.local-stack`,
+which worked locally and failed on the first CI run — every `.env*` is
+gitignored, so that file does not exist in a fresh checkout. Nothing needs to
+be committed, and the ports cannot drift from `config.toml`.
+
 ## Things that will bite you
 
 - **The port is 3100, spelled `localhost`.** Supabase refuses a magic-link
