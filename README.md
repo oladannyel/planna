@@ -229,7 +229,20 @@ Free-tier models are retired without notice, and their request caps are per-mode
 
 ```bash
 AI_MODEL=openrouter/free
-AI_MODEL_FALLBACKS=meta-llama/llama-3.3-70b-instruct:free,google/gemma-2-9b-it:free
+AI_MODEL_FALLBACKS=first-fallback,second-fallback
+```
+
+Deliberately no example slugs: free models are retired weekly, and the two this
+file used to name were both dead 404s within a month of being written. List what
+is live, then let the health check confirm your chain:
+
+```bash
+# what your provider currently serves for free
+curl -s https://openrouter.ai/api/v1/models \
+  | jq -r '.data[] | select(.pricing.prompt == "0") | .id'
+
+# whether the chain you chose actually answers
+curl -H "Authorization: Bearer $CRON_SECRET" localhost:3000/api/cron/ai-health
 ```
 
 Failover is deliberately narrow — only failures a _different model_ could fix:
