@@ -7,6 +7,8 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript)](https://www.typescriptlang.org)
 
+**[Live instance](https://planna-toju-9568c7f4.vercel.app)** · [Quick start](#quick-start) · [Architecture notes](#architecture-notes)
+
 ![The plAnna board](docs/screenshots/board-dark.jpg)
 
 ---
@@ -125,15 +127,15 @@ Open <http://localhost:3000>.
 
 ## Development
 
-| Command           | What it does                    |
-| ----------------- | ------------------------------- |
-| `pnpm dev`        | Start the dev server            |
-| `pnpm build`      | Production build                |
-| `pnpm typecheck`  | `tsc --noEmit`, strict          |
-| `pnpm lint`       | ESLint, zero warnings tolerated |
-| `pnpm test`       | Full suite with coverage        |
-| `pnpm test:watch` | Tests in watch mode             |
-| `pnpm format`     | Prettier across the repo        |
+| Command           | What it does                              |
+| ----------------- | ----------------------------------------- |
+| `pnpm dev`        | Start the dev server                      |
+| `pnpm build`      | Production build                          |
+| `pnpm typecheck`  | `tsc --noEmit`, strict                    |
+| `pnpm lint`       | ESLint, zero warnings tolerated           |
+| `pnpm test`       | Unit and integration suite, with coverage |
+| `pnpm test:watch` | Tests in watch mode                       |
+| `pnpm format`     | Prettier across the repo                  |
 
 ### Local Supabase
 
@@ -149,6 +151,22 @@ supabase db reset       # replay migrations + seed
 It runs on `544xx` ports rather than Supabase's `543xx` defaults, so it
 coexists with other local Supabase projects. Sign in as `demo@planna.local`
 and collect the magic link from the mail catcher at <http://127.0.0.1:54424>.
+
+### What the coverage number covers
+
+`pnpm test` reports coverage with thresholds enforced in CI, but the figure is
+scoped, and a scoped number quoted without its scope is just a flattering one.
+Excluded from the denominator: `src/app/**` (route handlers, pages and layouts,
+which are exercised through their own tests but not counted as units),
+`src/hooks/**`, `src/lib/supabase/**`, barrel `index.ts` files, and a short list
+of named components whose behaviour needs a real browser — the dnd-kit board
+views and the Recharts SVG charts. Each exclusion carries its reason in
+[`vitest.config.ts`](vitest.config.ts).
+
+The logic those exclusions delegate to is covered directly: board move,
+persist and rollback live in `board/dnd.ts`, and chart data in
+`analytics/metrics.ts`. What the exclusions genuinely leave untested is the
+wiring between them, which is what the end-to-end suite is for.
 
 All four gates — typecheck, lint, test, build — must pass before anything merges. A Husky pre-commit hook runs lint-staged locally, and [CI](.github/workflows/ci.yml) enforces the same on every push and pull request.
 
