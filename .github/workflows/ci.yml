@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # No `version:` here on purpose. The action now errors out when a
       # version is pinned both here and in package.json's `packageManager`,
@@ -80,7 +80,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # No `version:` here — see the note in the `verify` job above.
       - name: Install pnpm
