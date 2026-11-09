@@ -30,10 +30,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # No `version:` here on purpose. The action now errors out when a
+      # version is pinned both here and in package.json's `packageManager`,
+      # so `packageManager` is the single source of truth — which also keeps
+      # CI on the exact pnpm a contributor gets locally.
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -80,10 +82,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # No `version:` here — see the note in the `verify` job above.
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Set up Node
         uses: actions/setup-node@v4
