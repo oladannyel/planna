@@ -59,7 +59,14 @@ tokens in [`tailwind.config.ts`](tailwind.config.ts) and
   before first paint — React mounts too late to do this.
 - **Contrast is tested, not eyeballed.** Every foreground/surface pair is
   asserted against WCAG AA in `src/lib/__tests__/contrast.test.ts`, in both
-  themes. A token change that drops below 4.5:1 fails the suite.
+  themes. The tokens are read out of `globals.css` rather than copied into the
+  test — they were copied once, drifted, and the suite spent a while
+  certifying 4.75:1 for a colour that rendered at 2.14:1.
+- **And scanned, because token pairs are not the whole story.** A tinted badge
+  fill or a faded calendar date is a surface that only exists once composited,
+  which no token-pair test can see. The axe scan in `e2e/accessibility.spec.ts`
+  checks the rendered page in both themes and found three such failures the
+  token test could not.
 - **Charts read the same tokens.** Recharts takes colours as props and cannot
   see Tailwind classes, so `useChartPalette()` reads the live custom properties
   instead of duplicating the palette as hex.
@@ -127,15 +134,16 @@ Open <http://localhost:3000>.
 
 ## Development
 
-| Command           | What it does                              |
-| ----------------- | ----------------------------------------- |
-| `pnpm dev`        | Start the dev server                      |
-| `pnpm build`      | Production build                          |
-| `pnpm typecheck`  | `tsc --noEmit`, strict                    |
-| `pnpm lint`       | ESLint, zero warnings tolerated           |
-| `pnpm test`       | Unit and integration suite, with coverage |
-| `pnpm test:watch` | Tests in watch mode                       |
-| `pnpm format`     | Prettier across the repo                  |
+| Command           | What it does                                        |
+| ----------------- | --------------------------------------------------- |
+| `pnpm dev`        | Start the dev server                                |
+| `pnpm build`      | Production build                                    |
+| `pnpm typecheck`  | `tsc --noEmit`, strict                              |
+| `pnpm lint`       | ESLint, zero warnings tolerated                     |
+| `pnpm test`       | Unit and integration suite, with coverage           |
+| `pnpm test:e2e`   | Playwright end-to-end suite (needs the local stack) |
+| `pnpm test:watch` | Tests in watch mode                                 |
+| `pnpm format`     | Prettier across the repo                            |
 
 ### Local Supabase
 
@@ -165,8 +173,12 @@ views and the Recharts SVG charts. Each exclusion carries its reason in
 
 The logic those exclusions delegate to is covered directly: board move,
 persist and rollback live in `board/dnd.ts`, and chart data in
-`analytics/metrics.ts`. What the exclusions genuinely leave untested is the
-wiring between them, which is what the end-to-end suite is for.
+`analytics/metrics.ts`. The wiring between them is covered by the end-to-end
+suite in [`e2e/`](e2e/README.md), which drives a real browser against a
+production build and the local Supabase stack: sign-in through the magic-link
+callback, a keyboard drag across the board that must survive a reload, that
+the Content Security Policy is served and never violated, and an axe
+accessibility scan of every page in both themes.
 
 All four gates — typecheck, lint, test, build — must pass before anything merges. A Husky pre-commit hook runs lint-staged locally, and [CI](.github/workflows/ci.yml) enforces the same on every push and pull request.
 

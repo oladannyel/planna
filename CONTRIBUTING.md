@@ -22,9 +22,16 @@ Four gates. All four must be green before a pull request can merge, and CI runs 
 ```bash
 pnpm typecheck     # tsc --noEmit, strict mode
 pnpm lint          # eslint, --max-warnings 0
+pnpm schema:check  # the generated combined schema is current
 pnpm test          # vitest with coverage
 pnpm build         # production build
 ```
+
+There is a fifth suite that is not part of the pre-push gates because it needs
+Docker: `pnpm test:e2e` drives a real browser against a production build and
+the local Supabase stack. CI runs it on every pull request. Run it yourself
+before touching the board, the auth flow, the security headers or the theme
+tokens — see [`e2e/README.md`](e2e/README.md).
 
 Next 16 gives `next dev` its own output directory (`.next/dev`), so a build
 and a running dev server no longer collide. Earlier versions shared `.next`,
