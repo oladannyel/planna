@@ -54,5 +54,56 @@ function withLegacyAliases(source: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   return resolved;
 }
 
-export const env = envSchema.parse(withLegacyAliases(process.env));
+/**
+ * The literal values shipped in `.env.local.example`.
+ *
+ * `cp .env.local.example .env.local` and nothing else leaves these in place,
+ * and every one of them is *shape*-valid — `https://your-project.supabase.co`
+ * is a perfectly good URL — so Zod accepts them, the server boots, and the
+ * login page renders looking entirely functional. The failure only surfaces
+ * when the user clicks "Send magic link" and the browser reports
+ * `Failed to fetch`, which says nothing about the cause.
+ *
+ * A clean-clone run of the README ended exactly there. Checking for the
+ * placeholders turns a confusing dead end near the finish into a precise
+ * message at startup, which is what the README has always claimed happens.
+ */
+const PLACEHOLDERS: Record<string, string> = {
+  NEXT_PUBLIC_SUPABASE_URL: "https://your-project.supabase.co",
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: "your-anon-key",
+  SUPABASE_SERVICE_ROLE_KEY: "your-service-role-key",
+  AI_API_KEY: "your-api-key",
+  CRON_SECRET: "your-cron-secret",
+};
+
+function rejectPlaceholders(source: NodeJS.ProcessEnv): void {
+  const unfilled = Object.entries(PLACEHOLDERS)
+    .filter(([name, placeholder]) => source[name] === placeholder)
+    .map(([name]) => name);
+
+  if (unfilled.length === 0) return;
+
+  throw new Error(
+    [
+      "Your .env.local still has the example values for:",
+      ...unfilled.map((name) => `  - ${name}`),
+      "",
+      "Fill them in before starting the app. The fastest way to get real",
+      "values is the local stack, which needs no Supabase account:",
+      "",
+      "  supabase start          # prints the URL and keys to use",
+      "  supabase db reset       # applies migrations and seeds a demo workspace",
+      "",
+      "See the Quick start in README.md.",
+    ].join("\n"),
+  );
+}
+
+function readEnv(source: NodeJS.ProcessEnv) {
+  const resolved = withLegacyAliases(source);
+  rejectPlaceholders(resolved);
+  return envSchema.parse(resolved);
+}
+
+export const env = readEnv(process.env);
 export type Env = z.infer<typeof envSchema>;

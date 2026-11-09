@@ -121,3 +121,63 @@ describe("env legacy OPENROUTER_* names", () => {
     expect(env.AI_MODEL).toBe("new/model");
   });
 });
+
+/**
+ * `cp .env.local.example .env.local` and nothing else leaves placeholder
+ * values that are all shape-valid, so the app used to boot and fail later at
+ * sign-in with `Failed to fetch`. A clean-clone run of the README ended there.
+ */
+describe("env placeholder detection", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    setEnv();
+  });
+
+  afterEach(() => {
+    process.env = ORIGINAL_ENV;
+  });
+
+  it.each([
+    ["NEXT_PUBLIC_SUPABASE_URL", "https://your-project.supabase.co"],
+    ["NEXT_PUBLIC_SUPABASE_ANON_KEY", "your-anon-key"],
+    ["SUPABASE_SERVICE_ROLE_KEY", "your-service-role-key"],
+    ["AI_API_KEY", "your-api-key"],
+    ["CRON_SECRET", "your-cron-secret"],
+  ])("refuses to start when %s is still the example value", async (name, placeholder) => {
+    setEnv({ [name]: placeholder });
+    await expect(import("../env")).rejects.toThrow(name);
+  });
+
+  it("names every unfilled variable at once, not just the first", async () => {
+    setEnv({
+      NEXT_PUBLIC_SUPABASE_URL: "https://your-project.supabase.co",
+      SUPABASE_SERVICE_ROLE_KEY: "your-service-role-key",
+    });
+    await expect(import("../env")).rejects.toThrow(
+      /NEXT_PUBLIC_SUPABASE_URL[\s\S]*SUPABASE_SERVICE_ROLE_KEY/,
+    );
+  });
+
+  it("points at the local stack, which needs no account", async () => {
+    setEnv({ AI_API_KEY: "your-api-key" });
+    await expect(import("../env")).rejects.toThrow(/supabase start/);
+  });
+
+  /** CI builds with its own placeholders; only the example file's are rejected. */
+  it("accepts other placeholder-looking values", async () => {
+    setEnv({
+      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "ci-placeholder-anon-key",
+      SUPABASE_SERVICE_ROLE_KEY: "ci-placeholder-service-role-key",
+      AI_API_KEY: "ci-placeholder-model-provider-key",
+    });
+    const { env } = await import("../env");
+    expect(env.NEXT_PUBLIC_SUPABASE_URL).toBe("https://example.supabase.co");
+  });
+
+  it("is satisfied once the values are real", async () => {
+    setEnv({ NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54421" });
+    const { env } = await import("../env");
+    expect(env.NEXT_PUBLIC_SUPABASE_URL).toBe("http://127.0.0.1:54421");
+  });
+});

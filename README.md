@@ -83,54 +83,97 @@ tokens in [`tailwind.config.ts`](tailwind.config.ts) and
 
 ## Quick start
 
+Two ways in. The first needs no accounts and no keys, and gets you a working
+board with demo data in about two minutes — start there if you are just
+looking.
+
 ### Prerequisites
 
 - **Node.js 22.22.2+** (developed on 24 LTS). The test toolchain sets the floor — jsdom 31 is the strictest at `^22.22.2`, with Vitest 5 and MSW 3 just behind it — and Node 20 reached end of life in April 2026.
 - **pnpm 9+** — `npm i -g pnpm`
-- A free **[Supabase](https://supabase.com)** project
-- An API key for any OpenAI-compatible model provider — a free **[OpenRouter](https://openrouter.ai)** key is the default, and costs nothing
+- For the local route: **Docker** (running) and the **[Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started)**.
+- For the hosted route: a free **[Supabase](https://supabase.com)** project, and an API key for any OpenAI-compatible model provider — a free **[OpenRouter](https://openrouter.ai)** key is the default, and costs nothing.
 
-### 1. Clone and install
+### Route A — run it entirely locally (no account needed)
 
 ```bash
 git clone https://github.com/oladannyel/planna.git
 cd planna
 pnpm install
+
+supabase start      # first run pulls container images
+supabase db reset   # applies migrations, seeds a demo workspace
 ```
 
-### 2. Configure environment
+`supabase start` prints an **API URL**, an **anon key** and a **service_role
+key**. Put them in `.env.local`:
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-Fill in the values — see [`.env.local.example`](.env.local.example) for where each one comes from.
-
-### 3. Set up the database
-
-Run the migrations in [`supabase/migrations/`](supabase/migrations) **in order** against your Supabase project, either through the Supabase SQL editor or the Supabase CLI:
-
 ```bash
-supabase db push
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54421   # the API URL above
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
+SUPABASE_SERVICE_ROLE_KEY=<service_role key>
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+AI_API_KEY=anything-non-empty                      # only AI features need a real one
 ```
 
-They create the schema, enable Row Level Security, and add the monthly-summary, ethics and deadline features.
+> Copying the example file and changing nothing will not start: the app checks
+> for the example values and tells you which ones are still unfilled. Running
+> `supabase status -o env` reprints the keys at any time.
 
-### 4. Enable Google OAuth
-
-In your Supabase dashboard, under **Authentication → Providers → Google**, enable the provider and add your redirect URL:
-
-```
-http://localhost:3000/auth/callback
-```
-
-### 5. Run it
+Then:
 
 ```bash
 pnpm dev
 ```
 
-Open <http://localhost:3000>.
+Open <http://localhost:3000>, sign in as **`demo@planna.local`**, and collect
+the magic link from the mail catcher at <http://127.0.0.1:54424>. The board
+arrives already populated.
+
+The stack runs on `544xx` ports rather than Supabase's `543xx` defaults, so it
+coexists with other local Supabase projects. Natural-language capture and the
+generated reports are the only features that need a real model-provider key;
+everything else works without one.
+
+### Route B — against a hosted Supabase project
+
+1. **Clone and install**, as above.
+
+2. **Create the schema.** Either paste
+   [`supabase/all_migrations.sql`](supabase/all_migrations.sql) into the
+   Supabase SQL editor and run it once, or link the project and push:
+
+   ```bash
+   supabase link --project-ref <your-project-ref>
+   supabase db push
+   ```
+
+   Either way you get the schema, Row Level Security on every table, and the
+   monthly-summary, ethics, deadline and request-throttle features.
+
+3. **Configure the environment.** `cp .env.local.example .env.local` and fill
+   in the values — the file says where each one comes from. The Supabase
+   values are under **Project Settings → API**.
+
+4. **Enable Google OAuth.** In the Supabase dashboard, under
+   **Authentication → Providers → Google**, enable the provider and add your
+   redirect URL:
+
+   ```
+   http://localhost:3000/auth/callback
+   ```
+
+   Magic-link sign-in works without this; Google sign-in does not.
+
+5. **Run it.**
+
+   ```bash
+   pnpm dev
+   ```
 
 ## Development
 
@@ -144,21 +187,6 @@ Open <http://localhost:3000>.
 | `pnpm test:e2e`   | Playwright end-to-end suite (needs the local stack) |
 | `pnpm test:watch` | Tests in watch mode                                 |
 | `pnpm format`     | Prettier across the repo                            |
-
-### Local Supabase
-
-`supabase start` brings up Postgres, Auth, Studio and a mail catcher locally,
-applies every migration and seeds a demo workspace — no hosted project and no
-egress limits needed:
-
-```bash
-supabase start          # first run pulls container images
-supabase db reset       # replay migrations + seed
-```
-
-It runs on `544xx` ports rather than Supabase's `543xx` defaults, so it
-coexists with other local Supabase projects. Sign in as `demo@planna.local`
-and collect the magic link from the mail catcher at <http://127.0.0.1:54424>.
 
 ### What the coverage number covers
 
