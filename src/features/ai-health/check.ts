@@ -165,13 +165,11 @@ export async function runHealthCheck(fetchImpl: typeof fetch = fetch): Promise<H
   const key = await checkKey(fetchImpl);
   const models = key.alive
     ? await Promise.all(configuredModels().map((model) => checkModel(model, fetchImpl)))
-    : configuredModels().map(
-        (model): ModelHealth => ({
-          model,
-          verdict: "dead",
-          detail: "Not probed — the API key is not valid",
-        }),
-      );
+    : configuredModels().map((model): ModelHealth => ({
+        model,
+        verdict: "dead",
+        detail: "Not probed — the API key is not valid",
+      }));
 
   return {
     checkedAt: new Date().toISOString(),

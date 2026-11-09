@@ -21,8 +21,8 @@ describe("BoardToolbar", () => {
 
   it("shows the count beside each tab", () => {
     render(<BoardToolbar tabs={TABS} active={null} onSelect={vi.fn()} />);
-    expect(screen.getByRole("tab", { name: /All tasks 14/ })).toBeVisible();
-    expect(screen.getByRole("tab", { name: /To do 3/ })).toBeVisible();
+    expect(screen.getByRole("tab", { name: /All tasks, 14 tasks/ })).toBeVisible();
+    expect(screen.getByRole("tab", { name: /To do, 3 tasks/ })).toBeVisible();
   });
 
   it("marks only the active tab as selected", () => {

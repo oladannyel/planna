@@ -45,6 +45,13 @@ export function BoardToolbar({
               role="tab"
               type="button"
               aria-selected={isActive}
+              /*
+               * Spelled out rather than left to name-from-content. The count
+               * sits in its own <span> with no whitespace between, so the
+               * computed name concatenates to "All tasks14" — correct per the
+               * spec, and not what anyone wants read aloud.
+               */
+              aria-label={`${tab.label}, ${tab.count} ${tab.count === 1 ? "task" : "tasks"}`}
               onClick={() => onSelect(tab.value)}
               className={cn(
                 "inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -56,6 +63,7 @@ export function BoardToolbar({
             >
               {tab.label}
               <span
+                aria-hidden="true"
                 className={cn(
                   "rounded-full px-1.5 py-0.5 text-xs",
                   isActive ? "bg-purple/20 text-purple-ink" : "bg-text-muted/15 text-text-muted",

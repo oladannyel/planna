@@ -69,8 +69,8 @@ describe("KanbanBoard", () => {
   it("counts every status in the toolbar", () => {
     const tasks = [makeTask("1", "todo"), makeTask("2", "todo"), makeTask("3", "done")];
     render(<KanbanBoard initialTasks={tasks} />);
-    expect(screen.getByRole("tab", { name: /All tasks 3/ })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /To do 2/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /All tasks, 3 tasks/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /To do, 2 tasks/ })).toBeInTheDocument();
   });
 
   it("shows an empty hint for columns with no tasks", () => {
