@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { checkKey, checkModel, runHealthCheck } from "../check";
 
@@ -192,5 +192,37 @@ describe("runHealthCheck", () => {
       ),
     );
     expect(report.healthy).toBe(false);
+  });
+});
+
+describe("configuredModels", () => {
+  const ORIGINAL_ENV = process.env;
+
+  afterEach(() => {
+    process.env = ORIGINAL_ENV;
+    vi.resetModules();
+  });
+
+  async function modelsWith(overrides: Record<string, string>): Promise<string[]> {
+    process.env = { ...ORIGINAL_ENV, ...overrides };
+    vi.resetModules();
+    const { configuredModels } = await import("../check");
+    return configuredModels();
+  }
+
+  it("probes both configured models, deduplicated when they agree", async () => {
+    expect(await modelsWith({ AI_MODEL: "same/model", AI_REPORT_MODEL: "same/model" })).toEqual([
+      "same/model",
+    ]);
+  });
+
+  it("probes the fallback chain too — nobody notices an unused fallback rotting", async () => {
+    expect(
+      await modelsWith({
+        AI_MODEL: "parse/model",
+        AI_REPORT_MODEL: "report/model",
+        AI_MODEL_FALLBACKS: "backup/one,backup/two",
+      }),
+    ).toEqual(["parse/model", "backup/one", "backup/two", "report/model"]);
   });
 });

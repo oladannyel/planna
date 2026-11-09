@@ -10,7 +10,7 @@ import type { MonthlySummaryResult } from "@/features/monthly/actions";
 import { TASK_COLUMNS } from "@/features/tasks/columns";
 import { rowToTask } from "@/features/tasks/mappers";
 import { getAuthedContext } from "@/features/workspace/queries";
-import { getAiClient } from "@/lib/ai-client";
+import { createCompletion } from "@/lib/ai-completion";
 import { classifyProviderError } from "@/lib/ai-errors";
 import { env } from "@/lib/env";
 import { err, ok } from "@/lib/result";
@@ -79,7 +79,7 @@ export async function generateWeeklyReport(weekStart: string): Promise<Result<We
 
   let narrative = "Report unavailable.";
   try {
-    const response = await getAiClient().chat.completions.create({
+    const response = await createCompletion({
       model: env.AI_REPORT_MODEL,
       max_tokens: 1500,
       temperature: 0.4,

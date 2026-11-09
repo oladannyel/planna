@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { getAiClient } from "@/lib/ai-client";
+import { createCompletion } from "@/lib/ai-completion";
 import { classifyProviderError } from "@/lib/ai-errors";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
@@ -117,7 +117,7 @@ export async function parseMultipleTasksFromText(
 
   let raw = "";
   try {
-    const response = await getAiClient().chat.completions.create({
+    const response = await createCompletion({
       model: env.AI_MODEL,
       max_tokens: 2000,
       temperature: 0.1,

@@ -16,6 +16,12 @@ const envSchema = z.object({
   AI_MODEL: z.string().default("openrouter/free"),
   AI_REPORT_MODEL: z.string().default("openrouter/free"),
 
+  // Comma-separated models to try when the configured one fails in a way
+  // another model could fix — retired (404), capped (429), or unwell (5xx).
+  // Empty by default: failover is opt-in, because a silent switch to a model
+  // you did not choose should be something you asked for.
+  AI_MODEL_FALLBACKS: z.string().default(""),
+
   NEXT_PUBLIC_APP_URL: z.string().url(),
 });
 

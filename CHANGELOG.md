@@ -4,6 +4,27 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Model failover.** `AI_MODEL_FALLBACKS` takes a comma-separated chain of
+  models to try, in order, when the configured one fails in a way another
+  model could fix: retired (404), daily cap reached (429), or backend unwell
+  (408/5xx). A rejected key (401) and a malformed request (400) are never
+  retried, because every model in the chain shares the one key and the one
+  request body, so a second attempt is a guaranteed second failure.
+
+  Failover happens per request, so a model retired overnight costs nothing and
+  needs no redeploy. It is also why the daily health check still only
+  _reports_ a dead model rather than rewriting configuration — an unattended
+  cron that redeploys production is a worse failure than the one it fixes. The
+  check now probes the fallbacks too, since those are exactly the models
+  nobody notices breaking.
+
+  Empty by default: answering with a model you did not choose should be
+  something you opted into.
+
 ## [1.1.0] — 2026-11-09
 
 ### Added

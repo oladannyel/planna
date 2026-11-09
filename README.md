@@ -188,18 +188,19 @@ Each `features/*` folder follows the same shape: `schema.ts` (Zod), `queries.ts`
 - **The one unauthenticated path is capped.** Request links let anyone holding a slug file a task, which also spends a model call. Each workspace accepts 20 request-link submissions per hour, checked _before_ the model call so the expensive half of an abuse attempt never runs.
 - **Validated environment.** `src/lib/env.ts` parses every variable through Zod at startup, so a misconfiguration fails loudly and immediately.
 - **No model or provider lock-in.** plAnna talks plain OpenAI-compatible chat completions and uses no vendor-specific feature — no JSON mode, no tool calling, no structured outputs. The task parser asks for JSON in the prompt and tolerates a model that wraps it in a code fence or omits null keys, so small free models work. Point `AI_BASE_URL` at OpenRouter, OpenAI, Groq, Together, Fireworks, or a local Ollama / vLLM server, and set `AI_MODEL`. See [Swapping the model or provider](#swapping-the-model-or-provider).
-- **The AI configuration is watched.** A daily cron (`/api/cron/ai-health`) probes the key and every configured model, because free models are retired without notice and a revoked key looks exactly like a bad prompt from inside the app.
+- **The AI configuration is watched, and routes around itself.** A daily cron (`/api/cron/ai-health`) probes the key and every configured model, because free models are retired without notice and a revoked key looks exactly like a bad prompt from inside the app. Set `AI_MODEL_FALLBACKS` and a retired or rate-limited model is failed over per request, with no redeploy — see [Surviving a dead model](#surviving-a-dead-model).
 
 ## Swapping the model or provider
 
-plAnna is not tied to a model or a vendor. Four variables decide everything:
+plAnna is not tied to a model or a vendor. Five variables decide everything:
 
-| Variable          | What it does                                        |
-| ----------------- | --------------------------------------------------- |
-| `AI_BASE_URL`     | Any OpenAI-compatible `/chat/completions` endpoint  |
-| `AI_API_KEY`      | That provider's key                                 |
-| `AI_MODEL`        | The model that parses your notes into tasks         |
-| `AI_REPORT_MODEL` | The model that writes weekly and monthly narratives |
+| Variable             | What it does                                        |
+| -------------------- | --------------------------------------------------- |
+| `AI_BASE_URL`        | Any OpenAI-compatible `/chat/completions` endpoint  |
+| `AI_API_KEY`         | That provider's key                                 |
+| `AI_MODEL`           | The model that parses your notes into tasks         |
+| `AI_REPORT_MODEL`    | The model that writes weekly and monthly narratives |
+| `AI_MODEL_FALLBACKS` | Optional. Comma-separated models to fail over to    |
 
 ```bash
 # OpenRouter free tier (the default — costs nothing)
@@ -219,6 +220,29 @@ AI_BASE_URL=http://localhost:11434/v1
 AI_API_KEY=ollama
 AI_MODEL=llama3.1
 ```
+
+### Surviving a dead model
+
+Free-tier models are retired without notice, and their request caps are per-model. A single slug in `AI_MODEL` is therefore a single point of failure that reaches the user as a note that will not parse.
+
+`AI_MODEL_FALLBACKS` is a comma-separated chain tried in order:
+
+```bash
+AI_MODEL=openrouter/free
+AI_MODEL_FALLBACKS=meta-llama/llama-3.3-70b-instruct:free,google/gemma-2-9b-it:free
+```
+
+Failover is deliberately narrow — only failures a _different model_ could fix:
+
+| Upstream response        | What happens                                       |
+| ------------------------ | -------------------------------------------------- |
+| 404 model retired        | Next model in the chain                            |
+| 429 daily cap reached    | Next model in the chain — caps are per-model       |
+| 408 / 5xx backend unwell | Next model in the chain                            |
+| 401 / 403 key rejected   | Fails immediately — every model shares the one key |
+| 400 malformed request    | Fails immediately — it will be malformed next time |
+
+This happens per request, in `src/lib/ai-completion.ts`, and needs no redeploy. It is also why the daily health check only _reports_ a dead model rather than rewriting your configuration: a cron that redeploys production unattended at 03:00 is a worse failure than the one it is fixing. The check probes the fallbacks too, since those are precisely the models nobody notices breaking.
 
 A provider that is **not** OpenAI-compatible — Anthropic's native API, Bedrock, Vertex — needs a gateway in front of it. Anything that speaks the OpenAI protocol works as-is.
 

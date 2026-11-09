@@ -1,3 +1,4 @@
+import { modelChain } from "@/lib/ai-completion";
 import { env } from "@/lib/env";
 
 export type ModelVerdict = "ok" | "degraded" | "dead";
@@ -42,9 +43,15 @@ const PROBE_MAX_TOKENS = 512;
 
 const PROBE_PROMPT = 'Reply with exactly: {"ok":true}';
 
-/** Models worth probing — deduplicated, since both settings often agree. */
+/**
+ * Models worth probing: both configured models and every fallback behind them.
+ *
+ * The fallbacks have to be in here. They are exactly the models nobody
+ * notices breaking — traffic only reaches them once the primary is already
+ * down, so an unprobed chain quietly rots until the day it is needed.
+ */
 export function configuredModels(): string[] {
-  return [...new Set([env.AI_MODEL, env.AI_REPORT_MODEL])];
+  return [...new Set([...modelChain(env.AI_MODEL), ...modelChain(env.AI_REPORT_MODEL)])];
 }
 
 /**

@@ -41,6 +41,17 @@ describe("env", () => {
     expect(env.AI_REPORT_MODEL).toBe("openrouter/free");
   });
 
+  it("defaults to no fallback models, keeping failover opt-in", async () => {
+    const { env } = await import("../env");
+    expect(env.AI_MODEL_FALLBACKS).toBe("");
+  });
+
+  it("carries a configured fallback chain through verbatim", async () => {
+    setEnv({ AI_MODEL_FALLBACKS: "a/one, b/two" });
+    const { env } = await import("../env");
+    expect(env.AI_MODEL_FALLBACKS).toBe("a/one, b/two");
+  });
+
   it("respects an explicit AI_BASE_URL override", async () => {
     setEnv({ AI_BASE_URL: "https://proxy.example.com/v1" });
     const { env } = await import("../env");
