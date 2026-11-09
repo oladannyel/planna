@@ -15,9 +15,14 @@ const validBody = {
   urgency: "high",
 };
 
-function request(body: unknown, throwOnJson = false): NextRequest {
+function request(
+  body: unknown,
+  throwOnJson = false,
+  headers: Record<string, string> = { "x-forwarded-for": "203.0.113.5" },
+): NextRequest {
   return {
     json: () => (throwOnJson ? Promise.reject(new Error("bad json")) : Promise.resolve(body)),
+    headers: new Headers(headers),
   } as unknown as NextRequest;
 }
 
@@ -53,5 +58,34 @@ describe("POST /api/request", () => {
     h.ingestRequest.mockResolvedValue({ ok: false, error: { code: "DB_ERROR", message: "x" } });
     const res = await POST(request(validBody));
     expect(res.status).toBe(500);
+  });
+
+  it("returns 429 with Retry-After when throttled", async () => {
+    h.ingestRequest.mockResolvedValue({
+      ok: false,
+      error: { code: "RATE_LIMIT", message: "too many" },
+    });
+    const res = await POST(request(validBody));
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBe("3600");
+  });
+
+  /**
+   * The throttle is only as good as the address it is given. The route reads
+   * it from the request headers rather than from the body, where a client
+   * could nominate someone else's quota.
+   */
+  it("forwards the client address from the request headers", async () => {
+    h.ingestRequest.mockResolvedValue({ ok: true, value: { taskId: "t1" } });
+    await POST(request(validBody, false, { "x-real-ip": "198.51.100.77" }));
+    expect(h.ingestRequest).toHaveBeenCalledWith(expect.objectContaining({ slug: "demo" }), {
+      address: "198.51.100.77",
+    });
+  });
+
+  it("forwards a null address when no header identifies the caller", async () => {
+    h.ingestRequest.mockResolvedValue({ ok: true, value: { taskId: "t1" } });
+    await POST(request(validBody, false, {}));
+    expect(h.ingestRequest).toHaveBeenCalledWith(expect.anything(), { address: null });
   });
 });

@@ -15,6 +15,30 @@ export type TaskSourceEnum = "manual" | "ai_parsed" | "request_link";
 export interface Database {
   public: {
     Tables: {
+      /**
+       * Fixed-window hit counters for the unauthenticated request-link path.
+       * Reached only through `claim_request_slot` / `prune_request_throttle`,
+       * never queried directly — it is typed here so the schema and these
+       * types do not disagree.
+       */
+      request_throttle: {
+        Row: {
+          bucket: string;
+          window_start: string;
+          hits: number;
+        };
+        Insert: {
+          bucket: string;
+          window_start: string;
+          hits?: number;
+        };
+        Update: {
+          bucket?: string;
+          window_start?: string;
+          hits?: number;
+        };
+        Relationships: [];
+      };
       workspaces: {
         Row: {
           id: string;
@@ -228,6 +252,14 @@ export interface Database {
       append_status_history: {
         Args: { task_id: string; entry: Json };
         Returns: Json;
+      };
+      claim_request_slot: {
+        Args: { p_bucket: string; p_limit: number; p_window_seconds?: number };
+        Returns: boolean;
+      };
+      prune_request_throttle: {
+        Args: { p_older_than_seconds?: number };
+        Returns: number;
       };
     };
     Enums: {
