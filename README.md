@@ -69,7 +69,7 @@ tokens in [`tailwind.config.ts`](tailwind.config.ts) and
 - **[Supabase](https://supabase.com)** — Postgres, Auth (Google OAuth), and Row Level Security on every table
 - **[Tailwind CSS](https://tailwindcss.com)** + **[Radix UI](https://www.radix-ui.com)** primitives
 - **Any OpenAI-compatible model provider** for language-model calls — [OpenRouter](https://openrouter.ai) free tier by default
-- **[Vitest](https://vitest.dev)** + Testing Library + MSW — 483 tests
+- **[Vitest](https://vitest.dev)** + Testing Library + MSW, with coverage thresholds enforced in CI
 - **[Recharts](https://recharts.org)** for analytics, **[dnd-kit](https://dndkit.com)** for the board
 
 ## Quick start
@@ -158,7 +158,7 @@ All four gates — typecheck, lint, test, build — must pass before anything me
 src/
 ├── app/                  # Next.js App Router
 │   ├── (auth)/           # Login
-│   ├── (dashboard)/      # Board, daily, weekly, analytics, monthly, reports, ethics
+│   ├── (dashboard)/      # Board, daily, weekly, monthly, yearly, analytics, reports, ethics
 │   ├── api/              # Route handlers
 │   ├── auth/             # OAuth callback and signout
 │   └── request/[slug]/   # Public task-request links
@@ -185,8 +185,31 @@ Each `features/*` folder follows the same shape: `schema.ts` (Zod), `queries.ts`
 - **Server Actions over API routes.** Mutations are Server Actions, validated with Zod at the boundary. The only route handler is the public request endpoint.
 - **Results, not thrown errors.** Fallible operations return a `Result` type (`src/lib/result.ts`) so failure is part of the signature.
 - **Security in the database.** Row Level Security policies in [`0002_rls_policies.sql`](supabase/migrations/0002_rls_policies.sql) are the authority on who can read what — the app layer is not the only gate.
-- **The one unauthenticated path is capped.** Request links let anyone holding a slug file a task, which also spends a model call. Each workspace accepts 20 request-link submissions per hour, checked _before_ the model call so the expensive half of an abuse attempt never runs.
+- **A strict Content Security Policy, with a per-request nonce.** Built in
+  [`src/lib/security-headers.ts`](src/lib/security-headers.ts) and attached by
+  the proxy, because a nonce cannot come from a static config file — which is
+  the usual reason a project ends up with `script-src 'unsafe-inline'` and a
+  policy that stops nothing. `'strict-dynamic'` means an injected same-origin
+  `<script src>` fails too. HSTS, `X-Frame-Options`, `Referrer-Policy` and a
+  closed `Permissions-Policy` ride along, on redirects as well as pages. The
+  cost is honest: reading the nonce makes every route server-rendered, so
+  `/login` is no longer static.
+- **The one unauthenticated path is capped, atomically.** Request links let
+  anyone holding a slug file a task, which also spends a model call. Two caps
+  apply: 20 submissions per workspace per hour, and 10 per client address per
+  hour. Both are claimed in a single `insert ... on conflict do update ...
+returning` (see [`0007_request_throttle.sql`](supabase/migrations/0007_request_throttle.sql)),
+  so concurrent submissions serialise on a row lock instead of all reading the
+  same stale count — a counter that is read and then written holds only
+  against an attacker who waits their turn. The address slot is claimed
+  _before_ the slug is looked up, so an unknown slug cannot be used as a free
+  existence oracle, and the workspace slot _before_ the model call, so the
+  expensive half of an abuse attempt never runs.
 - **Validated environment.** `src/lib/env.ts` parses every variable through Zod at startup, so a misconfiguration fails loudly and immediately.
+- **Secrets cannot reach a log line.** `src/lib/logger.ts` redacts
+  secret-shaped values and secret-named keys from every message and context
+  object, recursively, before anything is written. SECURITY.md made that
+  promise long before any code kept it.
 - **No model or provider lock-in.** plAnna talks plain OpenAI-compatible chat completions and uses no vendor-specific feature — no JSON mode, no tool calling, no structured outputs. The task parser asks for JSON in the prompt and tolerates a model that wraps it in a code fence or omits null keys, so small free models work. Point `AI_BASE_URL` at OpenRouter, OpenAI, Groq, Together, Fireworks, or a local Ollama / vLLM server, and set `AI_MODEL`. See [Swapping the model or provider](#swapping-the-model-or-provider).
 - **The AI configuration is watched, and routes around itself.** A daily cron (`/api/cron/ai-health`) probes the key and every configured model, because free models are retired without notice and a revoked key looks exactly like a bad prompt from inside the app. Set `AI_MODEL_FALLBACKS` and a retired or rate-limited model is failed over per request, with no redeploy — see [Surviving a dead model](#surviving-a-dead-model).
 

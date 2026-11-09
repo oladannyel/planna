@@ -65,11 +65,11 @@ These are the conventions the existing code follows. Matching them keeps review 
 
 ## Database migrations
 
-Migrations are ordered SQL files in `supabase/migrations/`, numbered sequentially (`0006_...`). They are append-only — never edit one that has shipped. Write them to be idempotent (`if not exists`) where you reasonably can, and include RLS policies for anything new.
+Migrations are ordered SQL files in `supabase/migrations/`, numbered sequentially (`0008_...` is next). They are append-only — never edit one that has shipped. Write them to be idempotent (`if not exists`) where you reasonably can, and include RLS policies for anything new. After adding one, run `pnpm schema:build` to regenerate `supabase/all_migrations.sql` — CI fails if you forget, because that combined file is what a first-time user without the CLI pastes into the SQL editor.
 
 ## Tests
 
-The suite is 483 tests across 61 files, and new work is expected to keep it that way or better. Test behaviour, not implementation detail. Language-model calls are mocked — never let a test hit a live model or a real database.
+`pnpm test` enforces coverage thresholds, and new work is expected to keep them green or raise them. Test behaviour, not implementation detail. Language-model calls are mocked — never let a test hit a live model or a real database.
 
 ## Pull requests
 

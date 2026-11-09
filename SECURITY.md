@@ -44,7 +44,8 @@ If you deploy plAnna, these are yours to get right:
 
 - **Never commit `.env.local`.** It is gitignored; keep it that way.
 - **`SUPABASE_SERVICE_ROLE_KEY` bypasses Row Level Security.** It is a server-only secret. It must never reach the browser, a `NEXT_PUBLIC_` variable, or a log line.
-- **Apply every migration, in order.** Skipping `0002_rls_policies.sql` leaves tables without Row Level Security and your data readable across accounts.
+- **Apply every migration, in order.** Skipping `0002_rls_policies.sql` leaves tables without Row Level Security and your data readable across accounts. Skipping `0007_request_throttle.sql` leaves the public request endpoint with no working rate limit — it fails closed and refuses every submission rather than running uncapped, so you will notice, but you will notice as an outage.
 - **Lock your OAuth redirect URLs** to the domains you actually use.
 - **Treat request-link slugs as unlisted, not secret.** Anyone holding the link can file a task into that workspace by design.
-- **Rotate your OpenRouter key** if it is ever exposed in a log or a screenshot.
+- **Set `CRON_SECRET`** in any environment where the scheduled job runs. Without it `/api/cron/ai-health` refuses to serve, which is deliberate: an open cron route is an open quota drain.
+- **Rotate your OpenRouter key** if it is ever exposed in a log or a screenshot. The logger redacts secret-shaped values as a backstop, but it is a backstop, not a licence to log one.
