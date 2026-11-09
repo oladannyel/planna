@@ -15,9 +15,19 @@ updates:
     commit-message:
       prefix: "chore(deps)"
 
+  # Workflow actions are pinned to commit SHAs (see .github/workflows/ci.yml).
+  # Dependabot reads the `# vX.Y.Z` comment beside each pin and bumps both the
+  # SHA and the comment together, so pinning costs no maintenance.
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: monthly
+      interval: weekly
+      day: monday
+    groups:
+      # One PR a week for CI plumbing rather than four. Four separate bumps is
+      # how a queue of stale action PRs forms, which is its own security
+      # problem: the pins stop getting updated because nobody wants the chore.
+      github-actions:
+        patterns: ["*"]
     commit-message:
       prefix: "chore(ci)"

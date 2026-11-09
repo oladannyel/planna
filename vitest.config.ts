@@ -66,8 +66,7 @@ export default defineConfig({
         // Third-party-client construction / framework glue — verified via
         // integration tests against the Supabase emulator (spec §0), not units.
         "src/lib/supabase/**",
-        "src/lib/openrouter.ts",
-        "src/middleware.ts",
+        "src/proxy.ts",
         // Realtime subscription wiring — needs a live Supabase backend to
         // exercise; the merge logic it delegates to is covered elsewhere.
         "src/hooks/**",
