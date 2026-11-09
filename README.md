@@ -190,6 +190,23 @@ Each `features/*` folder follows the same shape: `schema.ts` (Zod), `queries.ts`
 - **No model or provider lock-in.** plAnna talks plain OpenAI-compatible chat completions and uses no vendor-specific feature — no JSON mode, no tool calling, no structured outputs. The task parser asks for JSON in the prompt and tolerates a model that wraps it in a code fence or omits null keys, so small free models work. Point `AI_BASE_URL` at OpenRouter, OpenAI, Groq, Together, Fireworks, or a local Ollama / vLLM server, and set `AI_MODEL`. See [Swapping the model or provider](#swapping-the-model-or-provider).
 - **The AI configuration is watched, and routes around itself.** A daily cron (`/api/cron/ai-health`) probes the key and every configured model, because free models are retired without notice and a revoked key looks exactly like a bad prompt from inside the app. Set `AI_MODEL_FALLBACKS` and a retired or rate-limited model is failed over per request, with no redeploy — see [Surviving a dead model](#surviving-a-dead-model).
 
+## Signing in
+
+Two ways in, and the second has a catch worth knowing before you rely on it.
+
+**Google** is one click and nothing to deliver. Enable it once:
+
+1. Google Cloud Console → **Create OAuth client ID** (Web application), with
+   `https://<your-project>.supabase.co/auth/v1/callback` as the authorized redirect URI.
+2. Supabase → **Authentication → Providers → Google** → paste the client ID and secret, enable.
+3. Supabase → **Authentication → URL Configuration** → add `<your app URL>/auth/callback` to the redirect allow-list.
+
+Until step 2 is done the button is still there and says so, rather than failing silently.
+
+**Email magic links** need no setup, but are delivered by Supabase's built-in email service, which is **rate limited to roughly two messages an hour and is explicitly not for production**. Hitting that cap looks exactly like links never arriving. Configure your own SMTP under **Authentication → SMTP Settings** before depending on it.
+
+Both routes end at the same `/auth/callback`, which exchanges the code for a session — there is no separate OAuth path to maintain.
+
 ## Swapping the model or provider
 
 plAnna is not tied to a model or a vendor. Five variables decide everything:

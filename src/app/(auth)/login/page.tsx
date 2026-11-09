@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 
+import { GoogleMark } from "./GoogleMark";
 import { describeSignInError, readAuthError } from "./auth-error";
 
 type Status =
   | { kind: "idle" }
   | { kind: "loading" }
+  | { kind: "redirecting" }
   | { kind: "sent"; email: string }
   | { kind: "error"; message: string };
 
@@ -54,7 +56,26 @@ export default function LoginPage() {
     );
   }
 
+  /**
+   * Google hands back the same `?code=` that the magic link does, so
+   * /auth/callback needs no special case — the one exchange serves both.
+   *
+   * There is no success state to render: on success the browser leaves for
+   * Google, so the only thing that can land back here is a failure.
+   */
+  async function signInWithGoogle(): Promise<void> {
+    setLinkError(null);
+    setStatus({ kind: "redirecting" });
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      ...(redirectTo ? { options: { redirectTo } } : {}),
+    });
+    if (error) setStatus({ kind: "error", message: describeSignInError(error.message) });
+  }
+
   const isLoading = status.kind === "loading";
+  const isBusy = isLoading || status.kind === "redirecting";
 
   return (
     <div className="surface p-8">
@@ -63,12 +84,28 @@ export default function LoginPage() {
         Plan, execute, and reflect — with a little AI.
       </p>
 
+      <button
+        type="button"
+        onClick={() => void signInWithGoogle()}
+        disabled={isBusy}
+        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-text-primary shadow-theme-xs transition-colors hover:bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <GoogleMark />
+        {status.kind === "redirecting" ? "Redirecting…" : "Continue with Google"}
+      </button>
+
+      <div className="my-5 flex items-center gap-3" aria-hidden="true">
+        <span className="h-px flex-1 bg-border" />
+        <span className="text-xs text-text-muted">or</span>
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
       <form
         onSubmit={(event) => {
           event.preventDefault();
           void signInWithMagicLink();
         }}
-        className="mt-6 space-y-3"
+        className="space-y-3"
       >
         <label htmlFor="email" className="block text-sm text-text-secondary">
           Email
@@ -84,7 +121,7 @@ export default function LoginPage() {
         />
         <button
           type="submit"
-          disabled={isLoading || email.length === 0}
+          disabled={isBusy || email.length === 0}
           className="inline-flex w-full items-center justify-center rounded-lg bg-purple px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs transition-colors hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? "Sending…" : "Send magic link"}

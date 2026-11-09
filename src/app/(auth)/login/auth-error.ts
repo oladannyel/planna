@@ -74,7 +74,18 @@ export function describeSignInError(message: string): string {
   if (normalized.includes("invalid") && normalized.includes("email")) {
     return "That does not look like a valid email address.";
   }
-  if (normalized.includes("signups not allowed") || normalized.includes("disabled")) {
+  if (normalized.includes("signups not allowed")) {
+    return "This workspace is not accepting new sign-ins right now.";
+  }
+  // Clicking Google before the provider is turned on in Supabase. Says what
+  // to do about it rather than "Unsupported provider".
+  if (
+    normalized.includes("provider is not enabled") ||
+    normalized.includes("unsupported provider")
+  ) {
+    return "Google sign-in is not enabled for this deployment yet. Use the email link below, or enable Google in Supabase \u2192 Authentication \u2192 Providers.";
+  }
+  if (normalized.includes("disabled")) {
     return "This workspace is not accepting new sign-ins right now.";
   }
   return message;
