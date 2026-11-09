@@ -49,13 +49,25 @@
     --color-border: 30 30 46; /* #1E1E2E   */
     --color-text-primary: 248 250 252; /* #F8FAFC */
     --color-text-secondary: 148 163 184; /* #94A3B8 */
-    --color-text-muted: 71 85 105; /* #475569 */
+    --color-text-muted: 126 140 160; /* #7E8CA0 — 5.21:1 on card, AA */
 
     /* Accents brightened for dark surfaces */
     --color-purple: 124 58 237; /* #7C3AED */
     --color-teal: 13 148 136; /* #0D9488  */
     --color-amber: 217 119 6; /* #D97706  */
     --color-danger: 220 38 38; /* #DC2626  */
+
+    /*
+     * Text-only accent variants for dark surfaces.
+     *
+     * These were missing from this block entirely, so dark mode inherited the
+     * light theme's brand-700 and error-700 — a deep purple and a deep red on
+     * a near-black background, at roughly 2:1. The contrast suite listed the
+     * values below as the dark palette, but nothing ever applied them here;
+     * it was asserting against numbers the stylesheet did not contain.
+     */
+    --color-purple-ink: 167 139 250; /* brand-400 — 6.55:1 on card, AA */
+    --color-danger-ink: 249 112 102; /* error-400 — 6.39:1 on card, AA */
 
     color-scheme: dark;
   }
@@ -130,6 +142,13 @@
     @apply text-text-muted group-hover:text-text-secondary;
   }
 
+  /*
+   * Badge text is `text-text-secondary`, not `text-text-muted`, wherever this
+   * is used. At 10px on the tinted badge fill the muted token renders 4.25:1,
+   * under AA. The token-pair contrast suite cannot catch it: the fill is the
+   * muted colour composited at 15% over the card, a surface that only exists
+   * once rendered. Found by the axe scan in e2e/accessibility.spec.ts.
+   */
   .menu-badge {
     @apply rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide;
   }
