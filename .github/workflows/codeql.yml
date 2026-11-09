@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Lets a scan be re-run by hand, which matters because a failure can be
+  # about repository settings rather than code: this one spent a day red
+  # only because code scanning was off while the repo was private.
+  workflow_dispatch:
+
   schedule:
     # Weekly, so a newly published advisory is found without waiting for the
     # next commit. A repository nobody has pushed to in a month is exactly the
