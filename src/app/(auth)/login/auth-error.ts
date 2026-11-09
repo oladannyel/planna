@@ -55,3 +55,27 @@ export function readAuthError(search: string, hash: string): string | null {
   const described = fromHash.get("error_description");
   return described ? described.replace(/\+/g, " ") : FALLBACK;
 }
+
+/**
+ * Rewrite a provider error from the *send* step into something actionable.
+ *
+ * Supabase's built-in email service is capped at a couple of messages an
+ * hour and is explicitly not meant for production. When that cap is hit it
+ * returns the bare string "email rate limit exceeded", which reads like a
+ * fault in the app rather than "wait, or configure SMTP" — and it is
+ * indistinguishable, from the user's side, from links simply not arriving.
+ */
+export function describeSignInError(message: string): string {
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes("rate limit") || normalized.includes("too many")) {
+    return "Too many sign-in emails have been sent in the last hour. Wait a few minutes and try again.";
+  }
+  if (normalized.includes("invalid") && normalized.includes("email")) {
+    return "That does not look like a valid email address.";
+  }
+  if (normalized.includes("signups not allowed") || normalized.includes("disabled")) {
+    return "This workspace is not accepting new sign-ins right now.";
+  }
+  return message;
+}

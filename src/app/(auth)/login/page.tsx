@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 
-import { readAuthError } from "./auth-error";
+import { describeSignInError, readAuthError } from "./auth-error";
 
 type Status =
   | { kind: "idle" }
@@ -47,7 +47,11 @@ export default function LoginPage() {
       email,
       ...(redirectTo ? { options: { emailRedirectTo: redirectTo } } : {}),
     });
-    setStatus(error ? { kind: "error", message: error.message } : { kind: "sent", email });
+    setStatus(
+      error
+        ? { kind: "error", message: describeSignInError(error.message) }
+        : { kind: "sent", email },
+    );
   }
 
   const isLoading = status.kind === "loading";

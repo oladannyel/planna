@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { readAuthError } from "../auth-error";
+import { describeSignInError, readAuthError } from "../auth-error";
 
 describe("readAuthError", () => {
   it("says nothing on an ordinary visit", () => {
@@ -39,5 +39,30 @@ describe("readAuthError", () => {
 
   it("tolerates the separators being present or absent", () => {
     expect(readAuthError("error=missing_code", "")).toMatch(/did not carry a login code/);
+  });
+});
+
+describe("describeSignInError", () => {
+  it("explains Supabase's bare rate-limit string", () => {
+    // Exactly what the built-in email service returns once the hourly cap is hit.
+    expect(describeSignInError("email rate limit exceeded")).toMatch(
+      /Too many sign-in emails .* Wait a few minutes/,
+    );
+  });
+
+  it("catches the other wordings of the same cap", () => {
+    expect(describeSignInError("For security purposes, too many requests")).toMatch(/Too many/);
+  });
+
+  it("explains a rejected address", () => {
+    expect(describeSignInError("Unable to validate email address: invalid format")).toMatch(
+      /valid email address/,
+    );
+  });
+
+  it("passes an unrecognised message through rather than inventing one", () => {
+    expect(describeSignInError("Something specific from the provider")).toBe(
+      "Something specific from the provider",
+    );
   });
 });
