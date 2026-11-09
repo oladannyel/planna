@@ -8,6 +8,18 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
+    /*
+     * The 5s default is too tight for the typing-heavy interaction tests.
+     * Building a jsdom per file is 40% of this suite's wall-clock, and under
+     * Vitest 5's parallelism the slowest `userEvent.type` tests were landing
+     * within a few hundred milliseconds of the limit — passing alone and
+     * failing at random in a full run, which is the worst kind of red.
+     *
+     * A ceiling, not a licence: a genuinely hung test still fails, it just
+     * takes 15s to say so.
+     */
+    testTimeout: 15_000,
+    hookTimeout: 15_000,
     env: {
       NEXT_PUBLIC_SUPABASE_URL: "https://test.supabase.co",
       NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key",
