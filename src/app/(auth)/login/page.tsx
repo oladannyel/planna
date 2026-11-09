@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
+
+import { readAuthError } from "./auth-error";
 
 type Status =
   | { kind: "idle" }
@@ -13,11 +15,32 @@ type Status =
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [linkError, setLinkError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const message = readAuthError(window.location.search, window.location.hash);
+    if (!message) return;
+    /*
+     * The URL is an external system, and a fragment does not exist during
+     * SSR at all, so this cannot seed useState without a hydration mismatch.
+     * This is the rule's own escape hatch; it cannot tell, because the read
+     * is synchronous.
+     */
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLinkError(message);
+
+    // Strip the error from the address bar once read, so a refresh does not
+    // re-report a failure already dealt with, and the fragment does not
+    // survive every later navigation on this page.
+    window.history.replaceState(null, "", window.location.pathname);
+  }, []);
 
   const redirectTo =
     typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined;
 
   async function signInWithMagicLink(): Promise<void> {
+    // A fresh attempt supersedes whatever the last link did.
+    setLinkError(null);
     setStatus({ kind: "loading" });
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOtp({
@@ -64,6 +87,11 @@ export default function LoginPage() {
         </button>
       </form>
 
+      {linkError !== null && status.kind === "idle" && (
+        <p role="alert" className="mt-4 text-sm text-danger-ink">
+          {linkError}
+        </p>
+      )}
       {status.kind === "sent" && (
         <p className="mt-4 text-sm text-teal">Check {status.email} for your sign-in link.</p>
       )}
