@@ -35,7 +35,7 @@ jobs:
       # so `packageManager` is the single source of truth — which also keeps
       # CI on the exact pnpm a contributor gets locally.
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Set up Node
         uses: actions/setup-node@v7
@@ -84,7 +84,7 @@ jobs:
 
       # No `version:` here — see the note in the `verify` job above.
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Set up Node
         uses: actions/setup-node@v7
