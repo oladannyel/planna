@@ -76,7 +76,7 @@ tokens in [`tailwind.config.ts`](tailwind.config.ts) and
 
 ### Prerequisites
 
-- **Node.js 20.9+** (developed on 24 LTS)
+- **Node.js 22.12+** (developed on 24 LTS). The test toolchain sets the floor: Vitest 5, jsdom 31 and MSW 3 all require 22.12 or newer, and Node 20 reached end of life in April 2026.
 - **pnpm 9+** — `npm i -g pnpm`
 - A free **[Supabase](https://supabase.com)** project
 - An API key for any OpenAI-compatible model provider — a free **[OpenRouter](https://openrouter.ai)** key is the default, and costs nothing

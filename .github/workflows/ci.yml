@@ -22,9 +22,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The floor declared in package.json engines, and current LTS. Testing
-        # only one of them means the other is unverified for contributors.
-        node: [20.9, 24]
+        # The floor declared in package.json engines, current LTS, and the
+        # version production actually runs on. Testing only one of them
+        # leaves the others unverified for contributors or for users.
+        node: [22.12, 24, 26]
 
     steps:
       - name: Checkout
