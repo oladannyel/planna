@@ -65,7 +65,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }): React.JSX.Elemen
                         <>
                           <span className="flex-1 truncate">{item.label}</span>
                           {item.upcoming ? (
-                            <span className="menu-badge bg-text-muted/15 text-text-muted">
+                            <span className="menu-badge bg-text-muted/15 text-text-secondary">
                               soon
                             </span>
                           ) : null}

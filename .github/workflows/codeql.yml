@@ -1,5 +1,7 @@
 name: CodeQL
 
+# Actions pinned to commit SHAs — see the note in ci.yml.
+
 on:
   push:
     branches: [main]
@@ -42,10 +44,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@9418214df1f2c4b8128c770156c409013b07d6b9 # v3.39.3
         with:
           language: ${{ matrix.language }}
           # security-extended adds lower-severity and quality queries beyond
@@ -53,6 +55,6 @@ jobs:
           queries: security-extended
 
       - name: Analyze
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@9418214df1f2c4b8128c770156c409013b07d6b9 # v3.39.3
         with:
           category: "/language:${{ matrix.language }}"

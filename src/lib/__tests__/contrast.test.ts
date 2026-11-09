@@ -1,36 +1,45 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { AA_NORMAL, contrastRatio, luminance } from "../contrast";
 import type { Rgb } from "../contrast";
 
 /**
- * Must mirror the custom properties in `globals.css`. If a token changes
- * there and not here, these tests pass while the app regresses — so treat a
- * change in one as requiring a change in the other.
+ * The theme tokens, read from `globals.css` itself.
+ *
+ * These used to be hand-copied into this file, under a comment warning that
+ * "if a token changes there and not here, these tests pass while the app
+ * regresses". That is exactly what happened: the dark `text-muted` here said
+ * [126, 140, 160] while the stylesheet shipped [71, 85, 105], so this suite
+ * certified 4.75:1 for a colour that actually rendered at 2.14:1. A warning
+ * comment is not a control. Parsing the stylesheet makes the drift
+ * impossible rather than merely discouraged.
  */
-const LIGHT: Record<string, Rgb> = {
-  canvas: [249, 250, 251],
-  card: [255, 255, 255],
-  "text-primary": [16, 24, 40],
-  "text-secondary": [71, 84, 103],
-  "text-muted": [102, 112, 133],
-  "purple-ink": [109, 40, 217],
-  teal: [15, 118, 110],
-  amber: [180, 71, 8],
-  "danger-ink": [180, 35, 24],
-};
+function readThemeTokens(): { LIGHT: Record<string, Rgb>; DARK: Record<string, Rgb> } {
+  const css = readFileSync(resolve(__dirname, "../../app/globals.css"), "utf8");
+  const themes: Record<string, Record<string, Rgb>> = { light: {}, dark: {} };
+  let current: string | null = null;
 
-const DARK: Record<string, Rgb> = {
-  canvas: [15, 15, 19],
-  card: [23, 23, 31],
-  "text-primary": [248, 250, 252],
-  "text-secondary": [148, 163, 184],
-  "text-muted": [126, 140, 160],
-  "purple-ink": [167, 139, 250],
-  teal: [13, 148, 136],
-  amber: [217, 119, 6],
-  "danger-ink": [249, 112, 102],
-};
+  for (const line of css.split("\n")) {
+    if (/^\s*:root\s*\{/.test(line)) current = "light";
+    else if (/^\s*\.dark\s*\{/.test(line)) current = "dark";
+
+    const match = line.match(/--color-([a-z-]+):\s*(\d+)\s+(\d+)\s+(\d+)\s*;/);
+    if (match && current) {
+      const [, name, r, g, b] = match;
+      themes[current]![name!] = [Number(r), Number(g), Number(b)];
+    }
+  }
+
+  if (Object.keys(themes.light!).length === 0 || Object.keys(themes.dark!).length === 0) {
+    throw new Error("Could not read theme tokens from globals.css");
+  }
+  return { LIGHT: themes.light!, DARK: themes.dark! };
+}
+
+const { LIGHT, DARK } = readThemeTokens();
 
 const FOREGROUNDS = [
   "text-primary",

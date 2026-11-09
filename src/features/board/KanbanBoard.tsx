@@ -12,9 +12,13 @@ import { BoardToolbar } from "./BoardToolbar";
 import type { BoardFilter, ToolbarTab } from "./BoardToolbar";
 import { KanbanColumn } from "./KanbanColumn";
 import { commitDrop } from "./dnd";
+import { createColumnCoordinateGetter } from "./keyboard-coordinates";
 
 /** All four plAnna statuses keep their own column (decision D8). */
 const STATUSES = ["todo", "in_progress", "done", "cancelled"] as const;
+
+/** One arrow press moves one column; see keyboard-coordinates.ts. */
+const columnCoordinateGetter = createColumnCoordinateGetter(STATUSES);
 
 const COLUMNS: { status: TaskStatus; label: string }[] = STATUSES.map((status) => ({
   status,
@@ -45,8 +49,13 @@ export function KanbanBoard({
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    // Keyboard dragging, so the board is not pointer-only.
-    useSensor(KeyboardSensor),
+    /*
+     * Keyboard dragging, so the board is not pointer-only — with a
+     * coordinate getter that moves a whole column per arrow press. dnd-kit's
+     * default steps a flat 25px, which on these columns is ten presses to
+     * move one task one column: reachable by keyboard, but not usable by it.
+     */
+    useSensor(KeyboardSensor, { coordinateGetter: columnCoordinateGetter }),
   );
 
   function handleDragEnd(event: DragEndEvent): void {

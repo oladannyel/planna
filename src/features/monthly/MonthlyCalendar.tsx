@@ -52,7 +52,10 @@ export function MonthlyCalendar({ weeks, dots, tasks }: MonthlyCalendarProps) {
               aria-label={day.date}
               className={cn(
                 "aspect-square rounded-lg border border-border p-1 text-left align-top text-xs",
-                !day.inMonth && "opacity-40",
+                // 60, not 40: at 40% the blended text is 3.70:1 in dark and 2.51:1
+                // in light, both under AA. Fading a date out must not make it
+                // unreadable — these days are still real dates a user can click.
+                !day.inMonth && "opacity-60",
                 selected === day.date && "ring-1 ring-purple",
               )}
             >

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Outfit } from "next/font/google";
+import { headers } from "next/headers";
 
 import { ThemeProvider, themeInitScript } from "@/components/theme";
 
@@ -35,11 +36,16 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Set by the proxy, which also puts it in the Content-Security-Policy. The
+  // theme script below is inline, so without this it is exactly what the
+  // policy is designed to block.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html
       lang="en"
@@ -52,7 +58,7 @@ export default function RootLayout({
           wrong theme. It mutates the <html> class, which is why this element
           carries suppressHydrationWarning.
         */}
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="bg-canvas font-sans text-text-primary antialiased">
         <ThemeProvider>{children}</ThemeProvider>

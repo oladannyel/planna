@@ -1,0 +1,13 @@
+# Default owner for everything in the repository. GitHub requests review from
+# the owner automatically on any pull request touching a matching path.
+*                           @oladannyel
+
+# Paths where a mistake is expensive and a second look is worth the friction:
+# the security policy, the database schema and its Row Level Security, the
+# rate limit on the one unauthenticated path, and anything that runs in CI
+# with this repository's token.
+/SECURITY.md                @oladannyel
+/supabase/migrations/       @oladannyel
+/src/features/request/      @oladannyel
+/src/lib/security-headers.ts @oladannyel
+/.github/workflows/         @oladannyel

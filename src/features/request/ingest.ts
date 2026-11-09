@@ -5,35 +5,58 @@ import type { Result } from "@/lib/result";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Json } from "@/types/database";
 
-/**
- * How many request-link tasks one workspace will accept per hour.
- *
- * Request links are unauthenticated by design: anyone holding the slug can
- * file a task. That makes this the only path where a stranger can cause the
- * workspace owner to spend money — each submission runs a language-model call
- * — and fill their board. A cap is the difference between a public form and
- * an open quota drain.
- *
- * Generous enough that a real team filing requests never notices it.
- */
-export const REQUEST_HOURLY_LIMIT = 20;
+import { addressKey, claimSlot, REQUEST_HOURLY_LIMIT, REQUEST_IP_HOURLY_LIMIT } from "./throttle";
 
-const ONE_HOUR_MS = 60 * 60 * 1000;
+export { REQUEST_HOURLY_LIMIT, REQUEST_IP_HOURLY_LIMIT };
+
+const RATE_LIMITED = {
+  code: "RATE_LIMIT",
+  message: "Too many requests in the past hour. Try again later.",
+} as const;
+
+export interface IngestContext {
+  /**
+   * Client address, from `clientAddress(headers)`. Null when the request
+   * arrived without a usable one; all such callers then share a single bucket,
+   * so stripping the header costs an attacker more than it buys.
+   */
+  address: string | null;
+}
 
 /**
- * Core request-link ingestion: resolve the workspace by slug (service role),
- * AI-enrich the submission, and insert a `request_link` task. Shared by the
- * public API route and the `submitRequest` server action.
+ * Core request-link ingestion: throttle the caller, resolve the workspace by
+ * slug (service role), throttle the workspace, AI-enrich the submission, and
+ * insert a `request_link` task. Shared by the public API route and the
+ * `submitRequest` server action.
  *
- * The throttle is checked *before* the model call, not after. Rejecting an
- * abusive request only once it has already been parsed would still let an
- * attacker burn the owner's AI quota at will, which is the expensive half of
- * the attack.
+ * The order of the first three steps is the security design, not an accident:
+ *
+ *  1. **Address slot, before the slug is touched.** An unknown slug used to be
+ *     answered before anything was counted, so the 404 was a free existence
+ *     oracle over every workspace in the deployment. Counting first means slug
+ *     guessing costs a guess from a quota of ten an hour.
+ *  2. **Workspace slot, before the model call.** Rejecting a submission only
+ *     after it has been parsed would still let an attacker burn the owner's AI
+ *     quota at will, which is the expensive half of the attack.
+ *  3. **Then, and only then, the model call and the insert.**
+ *
+ * Both claims are atomic (see `claim_request_slot`, migration 0007). The
+ * earlier implementation counted rows and then inserted, which held against a
+ * sequential caller and not against a concurrent one.
  */
 export async function ingestRequest(
   input: RequestInputSchema,
+  context: IngestContext,
 ): Promise<Result<{ taskId: string }>> {
   const admin = createAdminClient();
+
+  // `anon` rather than a digest when no address is available: a fixed literal
+  // puts every such caller in one bucket, which is the conservative reading.
+  const addressBucket = context.address ? `ip:${addressKey(context.address)}` : "ip:unknown";
+
+  const addressSlot = await claimSlot(admin, addressBucket, REQUEST_IP_HOURLY_LIMIT);
+  if (!addressSlot.ok) return addressSlot;
+  if (!addressSlot.value.allowed) return err(RATE_LIMITED);
 
   const { data: workspace, error: wsError } = await admin
     .from("workspaces")
@@ -48,18 +71,9 @@ export async function ingestRequest(
     return err({ code: "NOT_FOUND", message: "Workspace not found" });
   }
 
-  const since = new Date(Date.now() - ONE_HOUR_MS).toISOString();
-  const { count, error: countError } = await admin
-    .from("tasks")
-    .select("id", { count: "exact", head: true })
-    .eq("workspace_id", workspace.id)
-    .eq("source", "request_link")
-    .gte("created_at", since);
-
-  if (countError) {
-    return err({ code: "DB_ERROR", message: countError.message });
-  }
-  if ((count ?? 0) >= REQUEST_HOURLY_LIMIT) {
+  const workspaceSlot = await claimSlot(admin, `ws:${workspace.id}`, REQUEST_HOURLY_LIMIT);
+  if (!workspaceSlot.ok) return workspaceSlot;
+  if (!workspaceSlot.value.allowed) {
     return err({
       code: "RATE_LIMIT",
       message: "This workspace has received too many requests in the past hour. Try again later.",

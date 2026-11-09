@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { ingestRequest } from "@/features/request/ingest";
+import { clientAddress } from "@/features/request/throttle";
 import { requestInputSchema } from "@/features/tasks/schema";
 import { logger } from "@/lib/logger";
 
@@ -21,7 +22,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const result = await ingestRequest(validated.data);
+  const result = await ingestRequest(validated.data, {
+    address: clientAddress(req.headers),
+  });
   if (result.ok) {
     return NextResponse.json({ success: true }, { status: 201 });
   }

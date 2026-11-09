@@ -23,6 +23,13 @@ const envSchema = z.object({
   AI_MODEL_FALLBACKS: z.string().default(""),
 
   NEXT_PUBLIC_APP_URL: z.string().url(),
+
+  // Shared secret for the scheduled health check. Optional in the schema and
+  // required by the route: a contributor running `pnpm dev` has no cron to
+  // authenticate, so demanding it here would fail the whole app at startup
+  // over a job that is not running. `/api/cron/ai-health` refuses to serve
+  // without it instead, which puts the failure where the risk is.
+  CRON_SECRET: z.string().min(16).optional(),
 });
 
 /**

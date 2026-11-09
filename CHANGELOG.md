@@ -6,6 +6,44 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Security
+
+- **The request-link cap is now atomic.** It counted `tasks` rows and then
+  inserted, with nothing serialising the two, so submissions issued together
+  all read a count below the limit and a burst of N parallel requests spent N
+  model calls against a cap of 20. Slots are now claimed with a single
+  `insert ... on conflict do update ... returning` against a counter table
+  (migration `0007_request_throttle.sql`), so concurrent callers serialise on
+  a row lock. Fails closed — a deployment missing 0007 refuses submissions
+  rather than running uncapped.
+
+- **A second cap, per client address**, claimed _before_ the workspace slug is
+  looked up. An unknown slug used to be answered before anything was counted,
+  which made the 404 a free existence oracle over every workspace in a
+  deployment. Ten an hour, against 20 per workspace.
+
+- **A strict Content Security Policy with a per-request nonce**, plus HSTS,
+  `X-Frame-Options`, `Referrer-Policy`, a closed `Permissions-Policy` and
+  `Cross-Origin-Opener-Policy`. There were previously no security headers at
+  all. Applied to redirects as well as pages. `'strict-dynamic'` means an
+  injected same-origin `<script src>` fails too. The cost: reading the nonce
+  makes every route server-rendered, so `/login` is no longer static.
+
+- **The logger redacts secrets.** SECURITY.md promised the service-role key
+  never reaches a log line; nothing enforced it, and the objects the logger is
+  handed are upstream errors, which like to carry the request that failed.
+  Secret-named keys and secret-shaped values are now stripped recursively,
+  cycle-safe, before anything is written.
+
+- **Constant-time comparison of `CRON_SECRET`**, which was `!==` and so leaked
+  the length of a matching prefix to anyone able to time the responses. It is
+  also now part of the Zod environment schema, which is the convention the
+  project documents and this was the one variable breaking.
+
+- **Every GitHub Action pinned to a commit SHA.** A tag is a pointer its owner
+  can repoint at any time, at which point the workflow runs whatever that
+  account pushes next, with this repository's token.
+
 ### Added
 
 - **Model failover.** `AI_MODEL_FALLBACKS` takes a comma-separated chain of
