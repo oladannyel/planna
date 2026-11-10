@@ -79,12 +79,18 @@ export async function generateWeeklyReport(weekStart: string): Promise<Result<We
 
   let narrative = "Report unavailable.";
   try {
-    const response = await createCompletion({
-      model: env.AI_REPORT_MODEL,
-      max_tokens: 1500,
-      temperature: 0.4,
-      messages: [{ role: "user", content: buildPrompt(weekStart, stats) }],
-    });
+    const response = await createCompletion(
+      {
+        model: env.AI_REPORT_MODEL,
+        max_tokens: 1500,
+        temperature: 0.4,
+        messages: [{ role: "user", content: buildPrompt(weekStart, stats) }],
+      },
+      // A reasoning model can spend its whole budget on the scratchpad and
+      // return 200 with no content. Saving that as the narrative would write
+      // the placeholder into the database as though it were the report.
+      { accept: (content) => content.trim().length > 0 },
+    );
     narrative = response.choices[0]?.message?.content ?? narrative;
   } catch (cause) {
     const classified = classifyProviderError(cause);

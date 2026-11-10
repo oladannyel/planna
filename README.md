@@ -7,7 +7,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript)](https://www.typescriptlang.org)
 
-**[Live instance](https://planna-toju-9568c7f4.vercel.app)** · [Quick start](#quick-start) · [Architecture notes](#architecture-notes)
+**[Live instance](https://planna-puce.vercel.app)** · [Quick start](#quick-start) · [Architecture notes](#architecture-notes)
 
 ![The plAnna board](docs/screenshots/board-dark.jpg)
 
@@ -345,13 +345,25 @@ curl -H "Authorization: Bearer $CRON_SECRET" localhost:3000/api/cron/ai-health
 
 Failover is deliberately narrow — only failures a _different model_ could fix:
 
-| Upstream response        | What happens                                       |
-| ------------------------ | -------------------------------------------------- |
-| 404 model retired        | Next model in the chain                            |
-| 429 daily cap reached    | Next model in the chain — caps are per-model       |
-| 408 / 5xx backend unwell | Next model in the chain                            |
-| 401 / 403 key rejected   | Fails immediately — every model shares the one key |
-| 400 malformed request    | Fails immediately — it will be malformed next time |
+| Upstream response         | What happens                                       |
+| ------------------------- | -------------------------------------------------- |
+| 404 model retired         | Next model in the chain                            |
+| 429 daily cap reached     | Next model in the chain — caps are per-model       |
+| 408 / 5xx backend unwell  | Next model in the chain                            |
+| 401 / 403 key rejected    | Fails immediately — every model shares the one key |
+| 400 malformed request     | Fails immediately — it will be malformed next time |
+| 200 with no usable output | Next model in the chain                            |
+
+That last row is the one people forget. A model can answer `200 OK` and still
+be useless: a reasoning model handed a long prompt can spend its whole token
+budget on the scratchpad and return `content: null`, and a small model can
+ignore "JSON only" and reply in prose. Neither is an error the provider will
+admit to, both reach the user as a note that will not parse, and both are
+fixed by the same thing as a 404. So `createCompletion` takes an `accept`
+predicate — the task parser asks "is this our task blob", the report writers
+ask "is there any text at all" — and a model that fails it is skipped like any
+other failure. The last model in the chain is returned regardless, so the
+caller still names the specific fault rather than a generic one.
 
 This happens per request, in `src/lib/ai-completion.ts`, and needs no redeploy. It is also why the daily health check only _reports_ a dead model rather than rewriting your configuration: a cron that redeploys production unattended at 03:00 is a worse failure than the one it is fixing. The check probes the fallbacks too, since those are precisely the models nobody notices breaking.
 
@@ -360,6 +372,16 @@ A provider that is **not** OpenAI-compatible — Anthropic's native API, Bedrock
 These were once named `OPENROUTER_*`. Those names still work, so upgrading breaks nothing, but the neutral ones are the documented set.
 
 ## Deployment
+
+> **Turn on Skew Protection.** A deploy replaces every Server Action id, but
+> not the JavaScript in a tab someone left open — so that tab posts an id the
+> new build has never heard of and the action fails before any application
+> code runs. plAnna sets `deploymentId` from `VERCEL_DEPLOYMENT_ID` in
+> [`next.config.mjs`](next.config.mjs), which turns that silent failure into a
+> reload onto the current build. Vercel's **Skew Protection** setting
+> (Project → Settings → Advanced) goes further and routes the stale request to
+> the deployment it came from, so the action simply succeeds. For a tool
+> people keep open all day, both are worth having.
 
 Deploys to [Vercel](https://vercel.com) with no extra configuration. Set the same environment variables in your project settings, and point `NEXT_PUBLIC_APP_URL` and your Supabase OAuth redirect at the deployed domain.
 

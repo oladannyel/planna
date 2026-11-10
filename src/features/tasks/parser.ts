@@ -88,6 +88,31 @@ function extractJson(raw: string): string {
   return raw.trim();
 }
 
+/**
+ * Does this model's answer actually contain the task blob we asked for?
+ *
+ * Used twice, deliberately. Once as the chain's `accept` predicate, so a model
+ * that answers 200 OK with prose, an apology or an empty string is swapped for
+ * the next model rather than reported to the user as unparseable input. Then
+ * again on the answer we settle for, so the specific failure — empty, non-JSON,
+ * wrong shape — is still named in the error and the log.
+ *
+ * Re-parsing the string twice costs microseconds against a network round trip.
+ */
+function toBlob(raw: string): ParsedBlob | null {
+  if (!raw.trim()) return null;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(extractJson(raw));
+  } catch {
+    return null;
+  }
+
+  const validated = parsedBlobSchema.safeParse(parsed);
+  return validated.success ? validated.data : null;
+}
+
 // ─── Map internal blob schema → ParsedTaskResult[] ────────────────────────────
 
 function mapParsedBlob(blob: ParsedBlob): ParsedTaskResult[] {
@@ -117,15 +142,20 @@ export async function parseMultipleTasksFromText(
 
   let raw = "";
   try {
-    const response = await createCompletion({
-      model: env.AI_MODEL,
-      max_tokens: 2000,
-      temperature: 0.1,
-      messages: [
-        { role: "system", content: buildSystemPrompt() },
-        { role: "user", content: trimmed },
-      ],
-    });
+    const response = await createCompletion(
+      {
+        model: env.AI_MODEL,
+        max_tokens: 2000,
+        temperature: 0.1,
+        messages: [
+          { role: "system", content: buildSystemPrompt() },
+          { role: "user", content: trimmed },
+        ],
+      },
+      // A model that returns 200 OK and no usable JSON is as broken, from
+      // here, as one that returns 404 — and the remedy is the same.
+      { accept: (content) => toBlob(content) !== null },
+    );
 
     raw = response.choices[0]?.message?.content ?? "";
     if (!raw) {

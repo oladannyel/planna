@@ -88,12 +88,18 @@ export async function generateMonthlySummary(
 
   let narrative = "Summary unavailable.";
   try {
-    const response = await createCompletion({
-      model: env.AI_REPORT_MODEL,
-      max_tokens: 1500,
-      temperature: 0.4,
-      messages: [{ role: "user", content: buildPrompt(year, month, stats) }],
-    });
+    const response = await createCompletion(
+      {
+        model: env.AI_REPORT_MODEL,
+        max_tokens: 1500,
+        temperature: 0.4,
+        messages: [{ role: "user", content: buildPrompt(year, month, stats) }],
+      },
+      // A reasoning model can spend its whole budget on the scratchpad and
+      // return 200 with no content. Saving that as the narrative would write
+      // the placeholder into the database as though it were the report.
+      { accept: (content) => content.trim().length > 0 },
+    );
     narrative = response.choices[0]?.message?.content ?? narrative;
   } catch (cause) {
     const classified = classifyProviderError(cause);

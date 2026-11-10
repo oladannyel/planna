@@ -111,3 +111,68 @@ describe("QuickAdd", () => {
     await waitFor(() => expect(screen.getByText(pattern)).toBeInTheDocument());
   });
 });
+
+/*
+ * A Server Action that rejects, rather than returning a failed Result.
+ *
+ * This is what a deploy landing on an open tab looks like from the client:
+ * the action id no longer exists, the call is rejected before any of our code
+ * runs. There was no catch, so the button stayed on "Adding…" indefinitely.
+ */
+describe("QuickAdd — when the action itself rejects", () => {
+  it("names the stale build and says to reload", async () => {
+    h.createMultipleTasksFromText.mockRejectedValue(
+      new Error('The Server Reference ID did not match the expected format. Received "bf70ec".'),
+    );
+    const user = userEvent.setup();
+    render(<QuickAdd />);
+
+    await user.type(screen.getByLabelText("New task"), "ship the thing");
+    await user.click(screen.getByRole("button", { name: "Add with AI" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/reload and try again/i)).toBeInTheDocument();
+    });
+  });
+
+  it("releases the button instead of leaving it on Adding…", async () => {
+    h.createMultipleTasksFromText.mockRejectedValue(new Error("network down"));
+    const user = userEvent.setup();
+    render(<QuickAdd />);
+
+    await user.type(screen.getByLabelText("New task"), "ship the thing");
+    await user.click(screen.getByRole("button", { name: "Add with AI" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Add with AI" })).toBeEnabled();
+    });
+    expect(screen.getByText(/couldn't reach the server/i)).toBeInTheDocument();
+  });
+
+  it("keeps the typed text so nothing is lost to the failure", async () => {
+    h.createMultipleTasksFromText.mockRejectedValue(new Error("network down"));
+    const user = userEvent.setup();
+    render(<QuickAdd />);
+
+    await user.type(screen.getByLabelText("New task"), "ship the thing");
+    await user.click(screen.getByRole("button", { name: "Add with AI" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/couldn't reach the server/i)).toBeInTheDocument();
+    });
+    expect(screen.getByLabelText("New task")).toHaveValue("ship the thing");
+  });
+
+  it("catches a rejection from the manual path too", async () => {
+    h.createTask.mockRejectedValue(new Error("network down"));
+    const user = userEvent.setup();
+    render(<QuickAdd />);
+
+    await user.type(screen.getByLabelText("New task"), "ship the thing");
+    await user.click(screen.getByRole("button", { name: "Add manually" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/couldn't reach the server/i)).toBeInTheDocument();
+    });
+  });
+});

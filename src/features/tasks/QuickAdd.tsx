@@ -31,6 +31,24 @@ function errorMessage(error: AppError): string {
   }
 }
 
+/**
+ * A Server Action can reject outright, not only return a failed `Result`.
+ *
+ * The one that actually happened: a deploy landed while this tab still held
+ * JavaScript from the previous build, so the action id it posted no longer
+ * existed and the server rejected the call before any of our code ran. There
+ * was no `catch` here, so the `await` threw, `setBusy(false)` never ran, and
+ * the button sat on "Adding…" until the page was reloaded — with nothing on
+ * screen to suggest reloading was the fix.
+ */
+function thrownMessage(cause: unknown): string {
+  const text = cause instanceof Error ? cause.message : String(cause);
+  if (/server (reference|action)/i.test(text)) {
+    return "plAnna updated while this page was open — reload and try again. Your text is still here.";
+  }
+  return "Couldn't reach the server. Check your connection and try again.";
+}
+
 const FIELD =
   "w-full rounded-xl border border-border bg-canvas px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-purple";
 
@@ -49,7 +67,15 @@ export function QuickAdd() {
     if (!canSubmit) return;
     setBusy(true);
     setFeedback({ kind: "idle" });
-    const result = await createMultipleTasksFromText(trimmed);
+
+    let result;
+    try {
+      result = await createMultipleTasksFromText(trimmed);
+    } catch (cause) {
+      setBusy(false);
+      setFeedback({ kind: "error", message: thrownMessage(cause) });
+      return;
+    }
     setBusy(false);
 
     if (!result.ok) {
@@ -72,13 +98,21 @@ export function QuickAdd() {
     setBusy(true);
     const dueAt = dueLocal ? new Date(dueLocal).toISOString() : undefined;
     const estimatedMinutes = estimate.trim() ? Number(estimate) : undefined;
-    const result = await createTask({
-      title: trimmed,
-      priority: "medium",
-      tags: [],
-      ...(dueAt ? { dueAt } : {}),
-      ...(estimatedMinutes && estimatedMinutes > 0 ? { estimatedMinutes } : {}),
-    });
+
+    let result;
+    try {
+      result = await createTask({
+        title: trimmed,
+        priority: "medium",
+        tags: [],
+        ...(dueAt ? { dueAt } : {}),
+        ...(estimatedMinutes && estimatedMinutes > 0 ? { estimatedMinutes } : {}),
+      });
+    } catch (cause) {
+      setBusy(false);
+      setFeedback({ kind: "error", message: thrownMessage(cause) });
+      return;
+    }
     setBusy(false);
     if (result.ok) {
       setText("");

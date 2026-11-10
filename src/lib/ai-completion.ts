@@ -29,6 +29,29 @@ export function modelChain(primary: string): string[] {
   return [...new Set([primary, ...fallbacks])];
 }
 
+/** The assistant text a completion carried, or "" when it carried none. */
+function contentOf(completion: OpenAI.ChatCompletion): string {
+  return completion.choices[0]?.message?.content ?? "";
+}
+
+export interface CompletionOptions {
+  /**
+   * Is this model's answer usable to the caller?
+   *
+   * HTTP status is not the only way a model fails. A reasoning model handed a
+   * long prompt can spend its whole token budget on the scratchpad and return
+   * `content: null` with a 200; a small model can ignore "JSON only" and
+   * answer in prose. Both are 200 OK, both are useless, and both are fixed by
+   * exactly the same thing as a 404: a different model.
+   *
+   * Without this the chain only covered the failures the provider admitted
+   * to, which are the easy half. Return false and the next model is tried;
+   * the last model's answer is returned regardless, so the caller still gets
+   * to raise its own specific error rather than a generic one from here.
+   */
+  accept?: (content: string) => boolean;
+}
+
 /**
  * One chat completion, with automatic failover down the model chain.
  *
@@ -47,12 +70,25 @@ export function modelChain(primary: string): string[] {
  */
 export async function createCompletion(
   params: OpenAI.ChatCompletionCreateParamsNonStreaming,
+  options: CompletionOptions = {},
 ): Promise<OpenAI.ChatCompletion> {
   const chain = modelChain(params.model);
 
   for (const [index, model] of chain.entries()) {
+    const isLast = index === chain.length - 1;
     try {
       const completion = await getAiClient().chat.completions.create({ ...params, model });
+
+      if (!isLast && options.accept && !options.accept(contentOf(completion))) {
+        logger.warn("AI model answered with unusable output — trying the next in the chain", {
+          model,
+          next: chain[index + 1],
+          finishReason: completion.choices[0]?.finish_reason,
+          contentLength: contentOf(completion).length,
+        });
+        continue;
+      }
+
       if (index > 0) {
         logger.warn("AI completion served by a fallback model", {
           model,
@@ -62,7 +98,6 @@ export async function createCompletion(
       }
       return completion;
     } catch (cause) {
-      const isLast = index === chain.length - 1;
       if (isLast || !isWorthAnotherModel(cause)) rethrow(cause);
       logger.warn("AI model failed — falling back to the next in the chain", {
         model,

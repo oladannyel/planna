@@ -185,3 +185,80 @@ describe("createCompletion", () => {
     expect(h.create).toHaveBeenCalledTimes(1);
   });
 });
+
+/*
+ * Failover on a 200 that is useless.
+ *
+ * The chain originally only reacted to errors the provider admitted to. A
+ * model that answers 200 OK with an empty string or with prose instead of the
+ * JSON we asked for is just as broken, and the remedy is the same one — so
+ * these cover the half that used to reach the user as "couldn't parse that".
+ */
+describe("createCompletion — unusable output", () => {
+  function answering(model: string, content: string | null): unknown {
+    return { model, choices: [{ message: { content }, finish_reason: "stop" }] };
+  }
+
+  const acceptsJson = { accept: (content: string) => content.trim().startsWith("{") };
+
+  it("moves to the next model when the answer is rejected by the caller", async () => {
+    setFallbacks("second/model");
+    h.create
+      .mockResolvedValueOnce(answering("primary/model", "I'm sorry, I can't do that."))
+      .mockResolvedValueOnce(answering("second/model", '{"tasks":[]}'));
+
+    const { createCompletion } = await load();
+    const result = await createCompletion(PARAMS, acceptsJson);
+
+    expect(h.create).toHaveBeenCalledTimes(2);
+    expect(result.choices[0]?.message?.content).toBe('{"tasks":[]}');
+  });
+
+  it("treats a 200 with null content as unusable", async () => {
+    setFallbacks("second/model");
+    h.create
+      .mockResolvedValueOnce(answering("primary/model", null))
+      .mockResolvedValueOnce(answering("second/model", '{"tasks":[]}'));
+
+    const { createCompletion } = await load();
+    const result = await createCompletion(PARAMS, acceptsJson);
+
+    expect(h.create).toHaveBeenCalledTimes(2);
+    expect(result.choices[0]?.message?.content).toBe('{"tasks":[]}');
+  });
+
+  it("returns the last model's answer even when it is unusable", async () => {
+    // So the caller still raises its own specific error — "non-JSON output",
+    // "empty response" — instead of a generic one invented in here.
+    setFallbacks("second/model");
+    h.create
+      .mockResolvedValueOnce(answering("primary/model", "nope"))
+      .mockResolvedValueOnce(answering("second/model", "also nope"));
+
+    const { createCompletion } = await load();
+    const result = await createCompletion(PARAMS, acceptsJson);
+
+    expect(h.create).toHaveBeenCalledTimes(2);
+    expect(result.choices[0]?.message?.content).toBe("also nope");
+  });
+
+  it("does not re-request when the first answer is accepted", async () => {
+    setFallbacks("second/model");
+    h.create.mockResolvedValueOnce(answering("primary/model", '{"tasks":[]}'));
+
+    const { createCompletion } = await load();
+    await createCompletion(PARAMS, acceptsJson);
+
+    expect(h.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("accepts anything when no predicate is given", async () => {
+    setFallbacks("second/model");
+    h.create.mockResolvedValueOnce(answering("primary/model", ""));
+
+    const { createCompletion } = await load();
+    await createCompletion(PARAMS);
+
+    expect(h.create).toHaveBeenCalledTimes(1);
+  });
+});

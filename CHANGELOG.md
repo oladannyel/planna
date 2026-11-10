@@ -6,6 +6,37 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **A deploy no longer breaks the tab you already had open.** Server Action
+  ids change with every build, so a tab holding the previous build's
+  JavaScript posted an id the new build had never heard of. The server
+  answered `The Server Reference ID did not match the expected format` and the
+  client simply rejected — which reached the user as a button that did nothing
+  or, worse, as "Couldn't parse that", blaming their notes for a deployment
+  race. `next.config.mjs` now sets `deploymentId` from `VERCEL_DEPLOYMENT_ID`,
+  so a mismatch becomes a reload onto the current build instead of a silent
+  failure. Enabling Vercel's Skew Protection as well makes the stale request
+  succeed outright.
+
+- **Quick add survives an action that rejects.** There was no `catch` around
+  the Server Action call, so any rejection — a dropped connection, the skew
+  above — threw past `setBusy(false)` and left the button on "Adding…"
+  forever, with nothing on screen to suggest reloading. It now reports the
+  failure, keeps the typed text, and names the stale-build case specifically.
+
+### Changed
+
+- **Model failover now also covers a 200 that is useless.** The chain only
+  reacted to failures the provider admitted to — 404, 429, 5xx. A reasoning
+  model that spends its whole budget on the scratchpad and returns
+  `content: null`, or a small model that answers in prose instead of the JSON
+  it was asked for, is just as broken and has exactly the same remedy: a
+  different model. `createCompletion` takes an `accept` predicate, the task
+  parser supplies "is this our task blob", and the report writers supply "is
+  there any text at all". The last model's answer is still returned as-is, so
+  callers keep raising their own specific errors.
+
 ### Security
 
 - **The request-link cap is now atomic.** It counted `tasks` rows and then
