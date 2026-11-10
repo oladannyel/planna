@@ -9,6 +9,8 @@ export interface AuthedContext {
   supabase: ServerSupabaseClient;
   userId: string;
   workspaceId: string;
+  /** The workspace's public slug — the shareable request link is built from it. */
+  workspaceSlug: string;
 }
 
 /**
@@ -35,7 +37,7 @@ export const getAuthedContext = requestMemo(async function getAuthedContext(): P
 
   const { data: workspace, error } = await supabase
     .from("workspaces")
-    .select("id")
+    .select("id, slug")
     .eq("owner_id", user.id)
     .maybeSingle();
 
@@ -47,5 +49,10 @@ export const getAuthedContext = requestMemo(async function getAuthedContext(): P
     return err({ code: "NOT_FOUND", message: "Workspace not found" });
   }
 
-  return ok({ supabase, userId: user.id, workspaceId: workspace.id });
+  return ok({
+    supabase,
+    userId: user.id,
+    workspaceId: workspace.id,
+    workspaceSlug: workspace.slug,
+  });
 });
