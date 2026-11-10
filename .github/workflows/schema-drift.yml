@@ -70,10 +70,17 @@ jobs:
       - name: Start the local stack as the reference
         run: supabase start
 
+      # Ask the CLI where it put the database rather than hardcoding the port.
+      # config.toml's ports are local-developer configuration and do move —
+      # plAnna and jobpilot both shipped with 54422, so whichever stack came up
+      # first owned it. A hardcoded port here would silently point the
+      # reference at the wrong database, or at nothing.
+      - name: Locate the reference database
+        run: |
+          echo "REFERENCE_DB_URL=$(supabase status -o json | jq -r '.DB_URL')" >> "$GITHUB_ENV"
+
       - name: Compare production against the migrations
         env:
-          # The local stack, from supabase/config.toml's db port.
-          REFERENCE_DB_URL: postgresql://postgres:postgres@127.0.0.1:54422/postgres
           # Session pooler or direct connection string for the production
           # project, with ?sslmode=require. Named PROD to keep it distinct from
           # the SUPABASE_DB_URL in .env.local, which points at a LOCAL stack —
