@@ -7,8 +7,8 @@ import { expect } from "@playwright/test";
  */
 export const DEMO_EMAIL = "demo@planna.local";
 
-/** Mailpit, the local stack's mail catcher. Supabase CLI puts it on 54424. */
-const MAILPIT = process.env.E2E_MAILPIT_URL ?? "http://127.0.0.1:54424";
+/** Mailpit, the local stack's mail catcher. Supabase CLI puts it on 54524. */
+const MAILPIT = process.env.E2E_MAILPIT_URL ?? "http://127.0.0.1:54524";
 
 interface MailpitMessage {
   ID: string;

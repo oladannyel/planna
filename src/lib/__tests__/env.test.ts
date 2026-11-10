@@ -176,8 +176,8 @@ describe("env placeholder detection", () => {
   });
 
   it("is satisfied once the values are real", async () => {
-    setEnv({ NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54421" });
+    setEnv({ NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54521" });
     const { env } = await import("../env");
-    expect(env.NEXT_PUBLIC_SUPABASE_URL).toBe("http://127.0.0.1:54421");
+    expect(env.NEXT_PUBLIC_SUPABASE_URL).toBe("http://127.0.0.1:54521");
   });
 });

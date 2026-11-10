@@ -33,7 +33,7 @@ different state than it found it. Reset before a run you intend to trust.
 Google OAuth cannot be driven from a test — it is a third party's login page,
 and automating a real Google account is both brittle and wrong. The specs use
 the magic-link flow instead: request a link, read it out of Mailpit (the local
-stack's mail catcher, on `54424`), and follow it. That exercises the same
+stack's mail catcher, on `54524`), and follow it. That exercises the same
 `/auth/callback` code exchange Google uses, so the path that matters is
 covered either way.
 
