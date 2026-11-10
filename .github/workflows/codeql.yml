@@ -58,3 +58,21 @@ jobs:
         uses: github/codeql-action/analyze@9418214df1f2c4b8128c770156c409013b07d6b9 # v3.39.3
         with:
           category: "/language:${{ matrix.language }}"
+
+  # A stable check name for branch protection — see the note on `gates` in
+  # ci.yml. The analyze job is per-language, so its check name moves whenever
+  # the language matrix does.
+  scanning:
+    name: Code scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [analyze]
+    if: always()
+
+    steps:
+      - name: Fail unless the analysis succeeded
+        env:
+          ANALYZE: ${{ needs.analyze.result }}
+        run: |
+          echo "analyze: $ANALYZE"
+          test "$ANALYZE" = success

@@ -164,3 +164,35 @@ jobs:
       # release, but anything reachable at runtime should.
       - name: Audit production dependencies
         run: pnpm audit --prod --audit-level moderate
+
+  # One stable name for branch protection to require.
+  #
+  # Requiring the matrix jobs directly looks tempting and is a trap: their
+  # check names contain the version — "Gates (Node 22.22.2)" — so the day the
+  # Node floor moves, the required check names a job that no longer runs and
+  # every pull request blocks forever on a green tree. This job's name never
+  # changes, so the matrix can change freely underneath it.
+  gates:
+    name: All gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [verify, e2e, audit]
+
+    # `always()` so this still runs when something upstream failed. Without it
+    # a failure upstream *skips* this job, and a skipped required check does
+    # not read as a failure — which is precisely the hole it exists to close.
+    if: always()
+
+    steps:
+      - name: Fail unless every gate succeeded
+        env:
+          VERIFY: ${{ needs.verify.result }}
+          E2E: ${{ needs.e2e.result }}
+          AUDIT: ${{ needs.audit.result }}
+        run: |
+          echo "gates:        $VERIFY"
+          echo "end-to-end:   $E2E"
+          echo "audit:        $AUDIT"
+          # Explicitly "success" — not "not failure". Cancelled and skipped
+          # are both not-failure, and neither is evidence the tree is good.
+          test "$VERIFY" = success && test "$E2E" = success && test "$AUDIT" = success
