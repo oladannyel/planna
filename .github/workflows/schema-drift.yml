@@ -1,0 +1,89 @@
+name: Schema drift
+
+# Does the production database actually have every migration in this repository?
+#
+# Nothing links this repo to the Supabase project, so no pipeline applies
+# migrations and `main` can be green while production is missing a table. That
+# has happened twice: 0005_due_at, and 0007_request_throttle, which made every
+# request-link submission return 500 in production while CI passed — the unit
+# tests mock Supabase, so a missing table is invisible to them.
+#
+# The reference is the local stack after `supabase start`, which applies every
+# migration in order. Expectations are therefore derived, not maintained: a new
+# migration is covered the day it lands.
+
+on:
+  # Deliberately NOT pull_request. This job needs a production database
+  # credential, and a pull_request run from a fork would expose the secret to
+  # code the repository has not reviewed. Post-merge is also the honest moment
+  # to ask the question: drift only becomes real once a migration is on main.
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - "scripts/check-schema-drift.mjs"
+      - ".github/workflows/schema-drift.yml"
+  schedule:
+    # 07:00 UTC daily. Catches drift introduced outside this repository —
+    # someone changing the schema in the Supabase dashboard — which a
+    # push-triggered run would never see.
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: Production matches migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install the Supabase CLI
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: latest
+
+      # This is what makes the check self-maintaining: `supabase start` applies
+      # every file in supabase/migrations in order, so the resulting database
+      # IS the expected schema. Nothing here lists the objects to look for.
+      - name: Start the local stack as the reference
+        run: supabase start
+
+      - name: Compare production against the migrations
+        env:
+          # The local stack, from supabase/config.toml's db port.
+          REFERENCE_DB_URL: postgresql://postgres:postgres@127.0.0.1:54422/postgres
+          # Session pooler or direct connection string for the production
+          # project, with ?sslmode=require. Named PROD to keep it distinct from
+          # the SUPABASE_DB_URL in .env.local, which points at a LOCAL stack —
+          # confusing the two means running migrations against the wrong
+          # database, and on a shared port that is another project's data.
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_PROD_DB_URL }}
+        run: node scripts/check-schema-drift.mjs
+
+      - name: Explain a failure
+        if: failure()
+        run: |
+          echo "::warning::Production is missing objects that the migrations define."
+          echo "Apply the outstanding migration(s) to the production project, then re-run."
