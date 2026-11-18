@@ -64,9 +64,16 @@ function FilterTab({
       {label}
       <span
         aria-hidden="true"
+        /*
+         * `text-text-secondary` on the tinted fill, not `text-text-muted`:
+         * the muted token is AA on the card but only 4.25:1 once that same
+         * colour is composited at 15% behind it. globals.css says so for
+         * `.menu-badge`; this pill had the same pair and the same defect,
+         * which the axe scan caught as soon as a second row of them existed.
+         */
         className={cn(
           "rounded-full px-1.5 py-0.5 text-xs",
-          isActive ? "bg-purple/20 text-purple-ink" : "bg-text-muted/15 text-text-muted",
+          isActive ? "bg-purple/20 text-purple-ink" : "bg-text-muted/15 text-text-secondary",
         )}
       >
         {count}

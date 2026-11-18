@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import type { Locator } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 
 import { signIn } from "./helpers/auth";
 
@@ -18,6 +18,10 @@ test.describe("task age", () => {
   test("the board can be narrowed to a single day", async ({ page }) => {
     await signIn(page);
     await page.goto("/board");
+
+    /* The seed creates nothing today, so "Today" would otherwise be 0 — a
+     * filter that hides everything proves less than one that keeps a card. */
+    await addTask(page, "Something started today");
 
     const ageRow = page.getByRole("tablist", { name: "Filter tasks by age" });
     await expect(ageRow).toBeVisible();
@@ -41,6 +45,7 @@ test.describe("task age", () => {
     const statusRow = page.getByRole("tablist", { name: "Filter tasks by status" });
     expect(await countOf(statusRow, "All tasks")).toBe(today);
 
+    expect(today).toBeGreaterThan(0);
     const visible = await page.locator('[aria-roledescription="draggable"]').count();
     expect(visible).toBe(today);
   });
@@ -48,6 +53,13 @@ test.describe("task age", () => {
   test("the daily list separates today's tasks from the carried-over ones", async ({ page }) => {
     await signIn(page);
     await page.goto("/daily");
+
+    /*
+     * The seed spreads tasks over the days before today and deliberately
+     * creates none today — so the "Created today" section has to be earned
+     * by adding one, which is also the path a user takes.
+     */
+    await addTask(page, "Something started today");
 
     const headings = await page.getByRole("heading", { level: 2 }).allTextContents();
     expect(headings).toContain("Created today");
@@ -70,12 +82,27 @@ test.describe("task age", () => {
     await expect(badge).toHaveText("1d");
 
     /* A task created today carries no age badge at all. */
+    await addTask(page, "Another one started today");
     const todaySection = page.locator("section", {
       has: page.getByRole("heading", { level: 2, name: "Created today" }),
     });
     await expect(todaySection.locator('[title*="Carried over"]')).toHaveCount(0);
   });
 });
+
+/**
+ * Add a task the way a user does — the manual path, which makes no model call.
+ *
+ * The wait is on the card, not on QuickAdd's confirmation. The confirmation
+ * names the task too and renders the moment the action returns, so waiting on
+ * the text alone let the test read the board's counts a render too early and
+ * see the new task missing from them.
+ */
+async function addTask(page: Page, title: string): Promise<void> {
+  await page.getByLabel("New task").fill(title);
+  await page.getByRole("button", { name: "Add manually" }).click();
+  await expect(page.locator("h3", { hasText: title })).toBeVisible();
+}
 
 /** Reads the count out of a tab's accessible name: "Older, 7 tasks". */
 async function countOf(row: Locator, label: string): Promise<number> {
