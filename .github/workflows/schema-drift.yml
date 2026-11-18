@@ -80,17 +80,46 @@ jobs:
           echo "REFERENCE_DB_URL=$(supabase status -o json | jq -r '.DB_URL')" >> "$GITHUB_ENV"
 
       - name: Compare production against the migrations
+        id: compare
         env:
           # Session pooler or direct connection string for the production
-          # project, with ?sslmode=require. Named PROD to keep it distinct from
-          # the SUPABASE_DB_URL in .env.local, which points at a LOCAL stack —
-          # confusing the two means running migrations against the wrong
-          # database, and on a shared port that is another project's data.
+          # project. Named PROD to keep it distinct from the SUPABASE_DB_URL in
+          # .env.local, which points at a LOCAL stack — confusing the two means
+          # running migrations against the wrong database, and on a shared port
+          # that is another project's data.
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_PROD_DB_URL }}
-        run: node scripts/check-schema-drift.mjs
+          # Supabase signs database certificates with its own private root, so
+          # the runner's trust store cannot verify them: without this the job
+          # fails at the handshake, which is what it did every night from the
+          # day it was added. The PEM is public material, held as a secret only
+          # because that is the tidiest way to hand a file to a job.
+          SUPABASE_CA_CERT: ${{ secrets.SUPABASE_PROD_CA_CERT }}
+        run: |
+          set +e
+          node scripts/check-schema-drift.mjs
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
 
+      # Drift and "could not look" are different events, and saying the first
+      # when the second happened is worse than saying nothing: it sends someone
+      # hunting a migration that was applied all along.
       - name: Explain a failure
         if: failure()
+        env:
+          CODE: ${{ steps.compare.outputs.code }}
         run: |
-          echo "::warning::Production is missing objects that the migrations define."
-          echo "Apply the outstanding migration(s) to the production project, then re-run."
+          case "$CODE" in
+            1)
+              echo "::warning::Production is missing objects that the migrations define."
+              echo "Apply the outstanding migration(s) to the production project, then re-run."
+              ;;
+            3)
+              echo "::warning::The check could not compare the databases — it never reached a verdict."
+              echo "Read the step log: the usual causes are a missing or wrong SUPABASE_PROD_CA_CERT,"
+              echo "or a SUPABASE_PROD_DB_URL pointing at a project that no longer exists."
+              ;;
+            *)
+              echo "::warning::The drift check failed before it could compare anything (exit ${CODE:-unknown})."
+              ;;
+          esac
