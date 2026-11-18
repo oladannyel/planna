@@ -11,7 +11,17 @@ vi.mock("@/hooks/useTasks", () => ({
 
 const { KanbanBoard } = await import("../KanbanBoard");
 
-function makeTask(id: string, status: Task["status"]): Task {
+function daysAgo(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString();
+}
+
+function makeTask(
+  id: string,
+  status: Task["status"],
+  createdAt = "2026-06-16T09:00:00.000Z",
+): Task {
   return {
     id,
     workspaceId: "ws-1",
@@ -29,8 +39,8 @@ function makeTask(id: string, status: Task["status"]): Task {
     carryCount: 0,
     statusHistory: [],
     completedAt: null,
-    createdAt: "2026-06-16T09:00:00.000Z",
-    updatedAt: "2026-06-16T09:00:00.000Z",
+    createdAt,
+    updatedAt: createdAt,
   };
 }
 
@@ -120,5 +130,45 @@ describe("KanbanBoard", () => {
     const doneTasks = Array.from({ length: 3 }, (_, i) => makeTask(`d${i}`, "done"));
     render(<KanbanBoard initialTasks={doneTasks} />);
     expect(screen.queryByRole("link", { name: /View all/ })).not.toBeInTheDocument();
+  });
+});
+
+describe("KanbanBoard age filter", () => {
+  const tasks = [
+    makeTask("today", "todo", daysAgo(0)),
+    makeTask("yesterday", "todo", daysAgo(1)),
+    makeTask("ancient", "todo", daysAgo(9)),
+  ];
+
+  it("counts each age bucket in the toolbar", () => {
+    render(<KanbanBoard initialTasks={tasks} />);
+    expect(screen.getByRole("tab", { name: /Any day, 3 tasks/ })).toBeVisible();
+    expect(screen.getByRole("tab", { name: /Today, 1 task/ })).toBeVisible();
+    expect(screen.getByRole("tab", { name: /Yesterday, 1 task/ })).toBeVisible();
+    expect(screen.getByRole("tab", { name: /Older, 1 task/ })).toBeVisible();
+  });
+
+  it("shows only tasks created today when Today is chosen", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    render(<KanbanBoard initialTasks={tasks} />);
+
+    await user.click(screen.getByRole("tab", { name: /Today, 1 task/ }));
+
+    expect(screen.getByText("Task today")).toBeInTheDocument();
+    expect(screen.queryByText("Task yesterday")).not.toBeInTheDocument();
+    expect(screen.queryByText("Task ancient")).not.toBeInTheDocument();
+  });
+
+  it("narrows the status counts to the chosen age", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    render(<KanbanBoard initialTasks={tasks} />);
+
+    await user.click(screen.getByRole("tab", { name: /Older, 1 task/ }));
+
+    expect(screen.getByRole("region", { name: "To do, 1 task" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /All tasks, 1 task/ })).toBeVisible();
+    expect(screen.getByText("Task ancient")).toBeInTheDocument();
   });
 });

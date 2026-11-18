@@ -39,9 +39,25 @@ describe("TaskCard", () => {
     expect(screen.getByText("Urgent")).toBeInTheDocument();
   });
 
-  it("shows the carryover count", () => {
-    render(<TaskCard task={makeTask({ carriedOver: true, carryCount: 3 })} />);
-    expect(screen.getByTitle("Carried over 3 time(s)")).toHaveTextContent("3");
+  it("shows how many days an open task has been carried over", () => {
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    render(<TaskCard task={makeTask({ createdAt: threeDaysAgo.toISOString() })} />);
+    expect(screen.getByTitle("Carried over for 3 days")).toHaveTextContent("3d");
+  });
+
+  it("names yesterday rather than counting one day", () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    render(<TaskCard task={makeTask({ createdAt: yesterday.toISOString() })} />);
+    expect(screen.getByTitle("Carried over from yesterday")).toHaveTextContent("1d");
+  });
+
+  it("omits the age badge on finished tasks, where age is noise", () => {
+    const lastWeek = new Date();
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    render(<TaskCard task={makeTask({ status: "done", createdAt: lastWeek.toISOString() })} />);
+    expect(screen.queryByTitle(/Carried over/)).not.toBeInTheDocument();
   });
 
   it("renders up to three tags, then a overflow count", () => {
@@ -52,8 +68,8 @@ describe("TaskCard", () => {
     expect(screen.getByText("+2")).toBeInTheDocument();
   });
 
-  it("omits the carryover badge for fresh tasks", () => {
-    render(<TaskCard task={makeTask()} />);
+  it("omits the carryover badge for tasks created today", () => {
+    render(<TaskCard task={makeTask({ createdAt: new Date().toISOString() })} />);
     expect(screen.queryByTitle(/Carried over/)).not.toBeInTheDocument();
   });
 

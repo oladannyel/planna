@@ -66,14 +66,45 @@ describe("DailyView", () => {
     expect(screen.getByText("Nothing scheduled")).toBeInTheDocument();
   });
 
-  it("orders carryovers before fresh tasks", () => {
-    const fresh = makeTask("fresh");
-    const carried = makeTask("carried", { carriedOver: true });
-    render(<DailyView tasks={[fresh, carried]} carryoverCount={1} streak={2} />);
+  const TODAY = new Date(2026, 5, 16, 12);
+
+  it("groups tasks by the day they were created, oldest section first", () => {
+    const tasks = [
+      makeTask("fresh", { createdAt: new Date(2026, 5, 16, 9).toISOString() }),
+      makeTask("yesterday", { createdAt: new Date(2026, 5, 15, 9).toISOString() }),
+      makeTask("ancient", { createdAt: new Date(2026, 5, 2, 9).toISOString() }),
+    ];
+    render(<DailyView tasks={tasks} carryoverCount={2} streak={2} today={TODAY} />);
+
+    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    expect(headings).toEqual([
+      "Carried over from earlier",
+      "Carried over from yesterday",
+      "Created today",
+    ]);
+
+    const items = screen.getAllByRole("listitem");
+    expect(items[0]?.textContent).toContain("Task ancient");
+    expect(items[2]?.textContent).toContain("Task fresh");
+    expect(screen.getByText(/2 tasks have carried over/)).toBeInTheDocument();
+    expect(screen.getByText("2 days streak")).toBeInTheDocument();
+  });
+
+  it("renders only the sections that have tasks", () => {
+    const tasks = [makeTask("fresh", { createdAt: new Date(2026, 5, 16, 9).toISOString() })];
+    render(<DailyView tasks={tasks} carryoverCount={0} streak={0} today={TODAY} />);
+
+    expect(screen.getByRole("heading", { level: 2, name: "Created today" })).toBeVisible();
+    expect(screen.queryByText("Carried over from yesterday")).not.toBeInTheDocument();
+  });
+
+  it("still orders carryovers before fresh tasks within a section", () => {
+    const created = new Date(2026, 5, 15, 9).toISOString();
+    const fresh = makeTask("fresh", { createdAt: created });
+    const carried = makeTask("carried", { createdAt: created, carriedOver: true });
+    render(<DailyView tasks={[fresh, carried]} carryoverCount={1} streak={2} today={TODAY} />);
 
     const items = screen.getAllByRole("listitem");
     expect(items[0]?.textContent).toContain("Task carried");
-    expect(screen.getByText(/1 task has carried over/)).toBeInTheDocument();
-    expect(screen.getByText("2 days streak")).toBeInTheDocument();
   });
 });

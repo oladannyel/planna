@@ -6,6 +6,7 @@ import { Badge } from "@/components/shared";
 import { cn } from "@/lib/cn";
 
 import { useTaskSheet } from "./TaskSheetProvider";
+import { daysOld, isOpenTask } from "./carryover";
 import type { Task, TaskPriority } from "./types";
 
 /** Priority shows as a left edge — colour without spending a badge slot. */
@@ -39,9 +40,26 @@ function deadlineLabel(task: Task): string | null {
   return task.dueDate;
 }
 
+/**
+ * Age badge: how long an open task has been waiting. Derived from `createdAt`
+ * rather than read from `carryCount`, which nothing in the app has ever
+ * written — the old badge always read "0". Finished tasks are left alone,
+ * since the age of something already done is just noise.
+ */
+function ageBadge(task: Task): { short: string; title: string } | null {
+  if (!isOpenTask(task)) return null;
+  const days = daysOld(task);
+  if (days < 1) return null;
+  return {
+    short: `${days}d`,
+    title: days === 1 ? "Carried over from yesterday" : `Carried over for ${days} days`,
+  };
+}
+
 export function TaskCard({ task }: { task: Task }) {
   const { open } = useTaskSheet();
   const deadline = deadlineLabel(task);
+  const age = ageBadge(task);
 
   return (
     <button
@@ -62,13 +80,13 @@ export function TaskCard({ task }: { task: Task }) {
 
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-sm font-medium leading-snug text-text-primary">{task.title}</h3>
-        {task.carriedOver ? (
+        {age ? (
           <span
             className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber/15 px-2 py-0.5 text-[10px] font-medium text-amber"
-            title={`Carried over ${task.carryCount} time(s)`}
+            title={age.title}
           >
             <Repeat2 className="h-3 w-3" aria-hidden />
-            {task.carryCount}
+            {age.short}
           </span>
         ) : null}
       </div>
