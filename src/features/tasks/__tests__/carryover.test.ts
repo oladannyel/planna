@@ -85,6 +85,32 @@ describe("sortDailyTasks", () => {
     ]);
   });
 
+  it("breaks an equal-priority tie with the longest wait first", () => {
+    const recent = makeTask({ id: "recent", createdAt: "2026-06-15T09:00:00.000Z" });
+    const ancient = makeTask({ id: "ancient", createdAt: "2026-06-01T09:00:00.000Z" });
+    expect(sortDailyTasks([recent, ancient], TODAY).map((t) => t.id)).toEqual([
+      "ancient",
+      "recent",
+    ]);
+  });
+
+  it("still lets priority outrank age", () => {
+    const ancientLow = makeTask({
+      id: "ancientLow",
+      priority: "low",
+      createdAt: "2026-06-01T09:00:00.000Z",
+    });
+    const freshUrgent = makeTask({
+      id: "freshUrgent",
+      priority: "urgent",
+      createdAt: "2026-06-16T09:00:00.000Z",
+    });
+    expect(sortDailyTasks([ancientLow, freshUrgent], TODAY).map((t) => t.id)).toEqual([
+      "freshUrgent",
+      "ancientLow",
+    ]);
+  });
+
   it("does not mutate the input array", () => {
     const tasks = [makeTask({ id: "x" }), makeTask({ id: "y", carriedOver: true })];
     const snapshot = tasks.map((t) => t.id);

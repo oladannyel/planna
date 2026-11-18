@@ -86,12 +86,20 @@ const PRIORITY_ORDER: Record<TaskPriority, number> = {
 
 /**
  * Sort for the daily view: carryovers first, then most-deferred first
- * (`carryCount` desc), then by priority (urgent → low).
+ * (`carryCount` desc), then by priority (urgent → low), and finally
+ * longest-waiting first.
+ *
+ * That last tiebreak is what actually orders a list today, since nothing
+ * writes `carryCount`: without it, equal-priority tasks fell back to whatever
+ * order the query returned, which read as random to anyone looking at a
+ * section of same-aged work.
  */
-export function sortDailyTasks(tasks: Task[]): Task[] {
+export function sortDailyTasks(tasks: Task[], today: Date = startOfToday()): Task[] {
   return [...tasks].sort((a, b) => {
     if (a.carriedOver !== b.carriedOver) return a.carriedOver ? -1 : 1;
     if (a.carryCount !== b.carryCount) return b.carryCount - a.carryCount;
-    return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
+    const byPriority = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
+    if (byPriority !== 0) return byPriority;
+    return daysOld(b, today) - daysOld(a, today);
   });
 }

@@ -28,7 +28,7 @@ export function DailyView({ tasks, carryoverCount, streak, today }: DailyViewPro
   const sections = SECTION_ORDER.map((age) => ({
     age,
     heading: TASK_AGE_HEADINGS[age],
-    tasks: sortDailyTasks(grouped[age]),
+    tasks: sortDailyTasks(grouped[age], today),
   })).filter((section) => section.tasks.length > 0);
 
   return (
