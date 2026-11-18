@@ -4,12 +4,13 @@ import { DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors } from
 import type { DragEndEvent } from "@dnd-kit/core";
 import { useMemo, useState } from "react";
 
+import { TASK_AGES, TASK_AGE_LABELS, groupByAge } from "@/features/tasks/carryover";
 import { TASK_STATUS_LABELS } from "@/features/tasks/status";
 import type { Task, TaskStatus } from "@/features/tasks/types";
 import { useTasks } from "@/hooks/useTasks";
 
 import { BoardToolbar } from "./BoardToolbar";
-import type { BoardFilter, ToolbarTab } from "./BoardToolbar";
+import type { AgeTab, BoardAgeFilter, BoardFilter, ToolbarTab } from "./BoardToolbar";
 import { KanbanColumn } from "./KanbanColumn";
 import { commitDrop } from "./dnd";
 import { createColumnCoordinateGetter } from "./keyboard-coordinates";
@@ -46,6 +47,7 @@ export function KanbanBoard({
 }) {
   const { tasks, setTasks } = useTasks(initialTasks, workspaceId);
   const [filter, setFilter] = useState<BoardFilter>(null);
+  const [ageFilter, setAgeFilter] = useState<BoardAgeFilter>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -62,16 +64,38 @@ export function KanbanBoard({
     void commitDrop(event, tasks, setTasks);
   }
 
+  /*
+   * Age buckets are derived from `created_at` on every render rather than read
+   * from the `carried_over` column, which nothing writes. Grouped once here so
+   * the age counts and the filtered list cannot disagree.
+   */
+  const byAge = useMemo(() => groupByAge(tasks), [tasks]);
+
+  const ageTabs: AgeTab[] = useMemo(
+    () => [
+      { value: null, label: "Any day", count: tasks.length },
+      ...TASK_AGES.map((age) => ({
+        value: age,
+        label: TASK_AGE_LABELS[age],
+        count: byAge[age].length,
+      })),
+    ],
+    [byAge, tasks.length],
+  );
+
+  /* The age choice narrows the board first; status counts follow from it. */
+  const scoped = ageFilter ? byAge[ageFilter] : tasks;
+
   const tabs: ToolbarTab[] = useMemo(
     () => [
-      { value: null, label: "All tasks", count: tasks.length },
+      { value: null, label: "All tasks", count: scoped.length },
       ...COLUMNS.map((column) => ({
         value: column.status,
         label: column.label,
-        count: tasks.filter((task) => task.status === column.status).length,
+        count: scoped.filter((task) => task.status === column.status).length,
       })),
     ],
-    [tasks],
+    [scoped],
   );
 
   const visibleColumns = filter ? COLUMNS.filter((c) => c.status === filter) : COLUMNS;
@@ -87,11 +111,18 @@ export function KanbanBoard({
   return (
     <DndContext id="planna-board" sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="surface overflow-hidden">
-        <BoardToolbar tabs={tabs} active={filter} onSelect={setFilter} />
+        <BoardToolbar
+          tabs={tabs}
+          active={filter}
+          onSelect={setFilter}
+          ageTabs={ageTabs}
+          activeAge={ageFilter}
+          onSelectAge={setAgeFilter}
+        />
 
         <div className="flex snap-x overflow-x-auto">
           {visibleColumns.map((column) => {
-            const columnTasks = tasks.filter((task) => task.status === column.status);
+            const columnTasks = scoped.filter((task) => task.status === column.status);
             const isFinished = FINISHED_STATUSES.includes(column.status);
             return (
               <KanbanColumn
