@@ -113,7 +113,7 @@ cp .env.local.example .env.local
 ```
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54421   # the API URL above
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54521   # the API URL above
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
 SUPABASE_SERVICE_ROLE_KEY=<service_role key>
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -131,7 +131,7 @@ pnpm dev
 ```
 
 Open <http://localhost:3000>, sign in as **`demo@planna.local`**, and collect
-the magic link from the mail catcher at <http://127.0.0.1:54424>. The board
+the magic link from the mail catcher at <http://127.0.0.1:54524>. The board
 arrives already populated.
 
 The stack runs on `544xx` ports rather than Supabase's `543xx` defaults, so it

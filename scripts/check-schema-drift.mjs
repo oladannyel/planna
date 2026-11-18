@@ -19,13 +19,36 @@
 // (`rls_auto_enable`, auth plumbing), and a dashboard-created object is worth
 // knowing about without blocking a merge on it.
 //
-// TLS: the connection string decides. Append `?sslmode=require` (or
-// `verify-full`) to SUPABASE_DB_URL and `pg` negotiates TLS with the system
-// trust store. If a host ever presents a certificate that fails verification,
-// the fix is to supply its CA — never to disable the check, which would turn
-// a credentialed connection into one anybody on the path can impersonate.
+// TLS: Supabase serves Postgres behind its own private root ("Supabase Root
+// 2021 CA"), not a publicly trusted one, so the system trust store cannot
+// verify it and `sslmode=require` alone fails with "self-signed certificate in
+// certificate chain". The fix is the one this file has always argued for:
+// supply the CA, never disable the check, which would turn a credentialed
+// connection into one anybody on the path can impersonate.
+//
+// Give the certificate to this script as SUPABASE_CA_CERT (the PEM text, which
+// is how a CI secret carries it) or SUPABASE_CA_CERT_FILE (a path). Download it
+// from the Supabase dashboard → Project Settings → Database → SSL
+// Configuration. The connection then runs at `verify-full`: the chain and the
+// hostname are both checked. A remote database with no CA configured is a
+// setup failure, not a clean run.
+
+import { randomUUID } from "node:crypto";
+import { writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 import { Client } from "pg";
+
+/** Drift found: production is missing something the migrations define. */
+const EXIT_DRIFT = 1;
+/** The comparison could not be made at all — bad config, no CA, no route. */
+const EXIT_SETUP = 3;
+
+/** Something stopped the check before it could compare anything. */
+class SetupError extends Error {}
+
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
 
 const FAIL_ON_EXTRA = process.argv.includes("--strict");
 
@@ -90,15 +113,89 @@ const PROBES = {
     where n.nspname = 'public' and c.relkind = 'r' and c.relreplident = 'f'`,
 };
 
-async function catalogue(connectionString, label) {
+/**
+ * Point a connection string at the CA, so TLS verifies instead of failing.
+ *
+ * `pg` lets the connection string win over any `ssl` object passed beside it
+ * (ConnectionParameters assigns the parsed string over the config), so the
+ * CA goes into the URL as `sslrootcert` rather than into client options where
+ * it would be silently ignored.
+ *
+ * The local stack speaks plaintext on loopback and needs none of this.
+ */
+function withVerifiedTls(rawUrl, label) {
+  let url;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    throw new SetupError(`${label} is not a valid connection URL.`);
+  }
+
+  if (LOCAL_HOSTS.has(url.hostname)) return rawUrl;
+  if (url.searchParams.has("sslrootcert")) return rawUrl;
+
+  const caFile = resolveCaFile();
+  if (!caFile) {
+    throw new SetupError(
+      `${label} is remote, and no CA certificate is configured.\n\n` +
+        "Supabase signs its database certificates with a private root, so the\n" +
+        "system trust store cannot verify them and the connection fails with\n" +
+        '"self-signed certificate in certificate chain".\n\n' +
+        "Download the certificate from the Supabase dashboard (Project Settings →\n" +
+        "Database → SSL Configuration) and pass it as SUPABASE_CA_CERT (the PEM\n" +
+        "text) or SUPABASE_CA_CERT_FILE (a path). In CI, add the PEM as a repository\n" +
+        "secret and hand it to the job as SUPABASE_CA_CERT.",
+    );
+  }
+
+  url.searchParams.set("sslmode", "verify-full");
+  url.searchParams.set("sslrootcert", caFile);
+  return url.toString();
+}
+
+/** The CA as a file path, whether it arrived as a path or as PEM text. */
+function resolveCaFile() {
+  const path = process.env.SUPABASE_CA_CERT_FILE?.trim();
+  if (path) return path;
+
+  const pem = process.env.SUPABASE_CA_CERT?.trim();
+  if (!pem) return null;
+  if (!pem.includes("BEGIN CERTIFICATE")) {
+    throw new SetupError(
+      "SUPABASE_CA_CERT does not look like a PEM certificate — expected a\n" +
+        "-----BEGIN CERTIFICATE----- block. Check that the secret holds the file's\n" +
+        "contents and not its name.",
+    );
+  }
+
+  /*
+   * 0600 in the OS temp directory: the certificate is public material, but the
+   * file is this run's own and nothing else needs to read it.
+   */
+  const file = join(tmpdir(), `supabase-ca-${randomUUID()}.crt`);
+  writeFileSync(file, `${pem}\n`, { mode: 0o600 });
+  return file;
+}
+
+async function catalogue(rawConnectionString, label) {
+  const connectionString = withVerifiedTls(rawConnectionString, label);
   const client = new Client({ connectionString, statement_timeout: 30_000 });
 
   try {
     await client.connect();
   } catch (cause) {
-    throw new Error(
-      `Could not connect to ${label}: ${cause.message}\n` +
-        "If this is a TLS failure, add ?sslmode=require to the connection string.",
+    /*
+     * Only certificate failures get the certificate advice. Appending it to
+     * every connection error is how the last version of this message misled:
+     * a wrong host or a dead tenant read as a TLS problem.
+     */
+    const tls = /certificate|self[- ]signed|SSL|TLS/i.test(cause.message ?? "");
+    throw new SetupError(
+      `Could not connect to ${label}: ${cause.message}` +
+        (tls
+          ? "\nThe CA supplied does not match the one this server presents;" +
+            "\nre-download it from the dashboard."
+          : ""),
       { cause },
     );
   }
@@ -124,13 +221,29 @@ const liveUrl = process.env.SUPABASE_DB_URL;
 
 if (!referenceUrl || !liveUrl) {
   console.error("Both REFERENCE_DB_URL (local stack) and SUPABASE_DB_URL (live) must be set.");
-  process.exit(2);
+  process.exit(EXIT_SETUP);
 }
 
-const [reference, live] = await Promise.all([
-  catalogue(referenceUrl, "the reference database"),
-  catalogue(liveUrl, "the live database"),
-]);
+/*
+ * Setup failures exit 3, drift exits 1. They are different events and the
+ * workflow says different things about them: for two days this check reported
+ * "production is missing objects" when what had actually happened was that it
+ * could not open a connection at all.
+ */
+let reference;
+let live;
+try {
+  [reference, live] = await Promise.all([
+    catalogue(referenceUrl, "the reference database"),
+    catalogue(liveUrl, "the live database"),
+  ]);
+} catch (error) {
+  if (error instanceof SetupError) {
+    console.error(`\n${error.message}`);
+    process.exit(EXIT_SETUP);
+  }
+  throw error;
+}
 
 const missing = [];
 const extra = [];
@@ -157,12 +270,12 @@ if (missing.length > 0) {
       "Apply it using scripts/apply-migration-0005.mjs as a template, or\n" +
       "`supabase db push` once the project is linked.",
   );
-  process.exit(1);
+  process.exit(EXIT_DRIFT);
 }
 
 if (extra.length > 0 && FAIL_ON_EXTRA) {
   console.error("\n--strict: failing on objects that no migration defines.");
-  process.exit(1);
+  process.exit(EXIT_DRIFT);
 }
 
 console.log(
