@@ -1,4 +1,10 @@
-import { differenceInCalendarDays, differenceInHours, parseISO } from "date-fns";
+import {
+  differenceInCalendarDays,
+  differenceInHours,
+  parseISO,
+  startOfDay,
+  subDays,
+} from "date-fns";
 
 import { completedDates } from "@/features/daily/streak";
 import type { Task } from "@/features/tasks/types";
@@ -141,9 +147,73 @@ export function cycleTimes(tasks: Task[], limit = 10): CycleTimePoint[] {
     .slice(0, limit)
     .reverse()
     .map((task) => ({
-      label: task.title.length > 20 ? `${task.title.slice(0, 19)}…` : task.title,
+      label: task.title.length > 24 ? `${task.title.slice(0, 23)}…` : task.title,
       hours: Math.max(0, differenceInHours(parseISO(task.completedAt), parseISO(task.createdAt))),
     }));
+}
+
+export interface PeriodDelta {
+  /** Count in the current window. */
+  current: number;
+  /** Count in the window of the same length immediately before it. */
+  previous: number;
+  /**
+   * Percentage change, rounded. Null when the previous window was empty —
+   * "up 100%" from zero is arithmetic, not information, and a card that says
+   * it invites a comparison that was never made.
+   */
+  changePct: number | null;
+}
+
+function delta(current: number, previous: number): PeriodDelta {
+  return {
+    current,
+    previous,
+    changePct: previous === 0 ? null : Math.round(((current - previous) / previous) * 100),
+  };
+}
+
+/**
+ * Created and completed counts for the last `days` days against the `days`
+ * before them.
+ *
+ * The page previously showed totals with nothing to compare them to, which
+ * tells you the size of your backlog and nothing about its direction. Both
+ * windows are whole calendar days in the server's zone — the same assumption
+ * `/daily` already makes.
+ */
+export function periodComparison(
+  tasks: Task[],
+  days = 7,
+  today: Date = new Date(),
+): { created: PeriodDelta; completed: PeriodDelta } {
+  const startOfCurrent = startOfDay(subDays(today, days - 1)).getTime();
+  const startOfPrevious = startOfDay(subDays(today, days * 2 - 1)).getTime();
+
+  function count(timestamps: (string | null)[]): [number, number] {
+    let current = 0;
+    let previous = 0;
+    for (const iso of timestamps) {
+      if (!iso) continue;
+      const at = parseISO(iso).getTime();
+      if (Number.isNaN(at)) continue;
+      if (at >= startOfCurrent) current += 1;
+      else if (at >= startOfPrevious) previous += 1;
+    }
+    return [current, previous];
+  }
+
+  const [createdNow, createdBefore] = count(tasks.map((task) => task.createdAt));
+  const [doneNow, doneBefore] = count(
+    tasks.map((task) => (isDone(task) ? task.completedAt : null)),
+  );
+
+  return { created: delta(createdNow, createdBefore), completed: delta(doneNow, doneBefore) };
+}
+
+/** Tasks still open — neither done nor cancelled. */
+export function openTaskCount(tasks: Task[]): number {
+  return tasks.filter((task) => task.status === "todo" || task.status === "in_progress").length;
 }
 
 /** Longest run of consecutive calendar days with ≥ 1 completion. */

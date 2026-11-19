@@ -1,36 +1,50 @@
-"use client";
+import { ComponentCard } from "@/components/ui";
 
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-
-import { useChartPalette } from "./chart-palette";
 import type { TagCount } from "./metrics";
 
+/**
+ * Top categories, as ranked bars on a shared baseline.
+ *
+ * This was a Recharts bar chart, which cost the route a chunk of that library
+ * to draw eight rectangles and left the tag names to an axis renderer that
+ * clipped them. Ranked bars with the name and the count in real text read
+ * more exactly than segments of a donut and need no chart library at all —
+ * and the figures are selectable, searchable and sized by the type scale.
+ *
+ * One hue, not eight: the bars encode magnitude, and rank is already carried
+ * by the order. Colour per tag would be identity the reader cannot use.
+ */
 export function CategoryBreakdown({ data }: { data: TagCount[] }) {
-  const palette = useChartPalette();
+  const max = data.reduce((highest, item) => Math.max(highest, item.count), 0);
 
   return (
-    <div className="surface p-4">
-      <h3 className="mb-3 text-sm font-medium text-text-secondary">Top categories</h3>
+    <ComponentCard
+      title="Top categories"
+      description="Tags across every task, most used first."
+      contentClassName="px-5 pb-5"
+    >
       {data.length === 0 ? (
         <p className="text-sm text-text-muted">No tagged tasks yet.</p>
       ) : (
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={data} layout="vertical" margin={{ left: 16 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={palette.grid} horizontal={false} />
-            <XAxis type="number" stroke={palette.axis} fontSize={11} allowDecimals={false} />
-            <YAxis type="category" dataKey="tag" stroke={palette.axis} fontSize={11} width={80} />
-            <Tooltip
-              contentStyle={{
-                background: palette.tooltipBg,
-                border: `1px solid ${palette.tooltipBorder}`,
-                borderRadius: 12,
-                color: palette.tooltipText,
-              }}
-            />
-            <Bar dataKey="count" name="Tasks" fill={palette.series} radius={[0, 4, 4, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        <ul className="space-y-3">
+          {data.map((item) => (
+            <li key={item.tag}>
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="truncate text-sm text-text-primary">{item.tag}</span>
+                <span className="font-display text-sm font-semibold tabular-nums text-text-secondary">
+                  {item.count}
+                </span>
+              </div>
+              <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-field">
+                <div
+                  className="h-full rounded-full bg-chart-1"
+                  style={{ width: `${max === 0 ? 0 : Math.round((item.count / max) * 100)}%` }}
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
-    </div>
+    </ComponentCard>
   );
 }
