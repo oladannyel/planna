@@ -29,6 +29,18 @@
      * thing marking it out was a border one step off the card, and on the
      * public request form that read as a page with no fields on it at all.
      */
+    /*
+     * Chart series. Separate from the UI accents on purpose: a series colour
+     * has to clear a chroma floor and a CVD separation gate against the other
+     * series, which the accent tokens are not chosen for. `--color-teal` is
+     * the accent (#0F766E) and reads grey at chroma 0.086 on white; this is
+     * the same hue re-stepped to 0.10+. Validated with the data-viz palette
+     * checker: lightness band, chroma floor, CVD separation (ΔE 21.6 deutan),
+     * normal-vision separation (30.6) and 3:1 against the card, both themes.
+     */
+    --color-chart-1: 109 40 217; /* brand-700 #6D28D9 */
+    --color-chart-2: 14 140 124; /* #0E8C7C */
+
     --color-field: 242 244 247; /* gray-100 */
     --color-field-border: 129 141 160; /* 3.36:1 on card — WCAG 1.4.11 */
 
@@ -46,6 +58,14 @@
      */
     --color-purple-ink: 109 40 217; /* brand-700 */
     --color-danger-ink: 180 35 24; /* error-700  */
+    /*
+     * The success badge paints `text-teal` on `bg-teal/15`, and the accent on
+     * its own 15% tint measures 4.43:1 here and 4.00:1 on dark — under AA on
+     * a fill the token-pair suite cannot see, because that surface only
+     * exists once composited. Same trap as the count pills in globals' badge
+     * note. These are the values used when teal is the *text* colour.
+     */
+    --color-teal-ink: 17 94 89; /* teal-800 — 6.14:1 on the tinted badge */
 
     color-scheme: light;
   }
@@ -64,6 +84,10 @@
     --color-text-primary: 248 250 252; /* #F8FAFC */
     --color-text-secondary: 148 163 184; /* #94A3B8 */
     --color-text-muted: 126 140 160; /* #7E8CA0 — 5.21:1 on card, AA */
+
+    /* See the light block: validated as a pair against the dark card. */
+    --color-chart-1: 124 58 237; /* #7C3AED */
+    --color-chart-2: 13 148 136; /* #0D9488 */
 
     /* See the light block: a field is its own surface. */
     --color-field: 34 34 46; /* #22222E */
@@ -86,6 +110,7 @@
      */
     --color-purple-ink: 167 139 250; /* brand-400 — 6.55:1 on card, AA */
     --color-danger-ink: 249 112 102; /* error-400 — 6.39:1 on card, AA */
+    --color-teal-ink: 45 212 191; /* teal-400 — 8.05:1 on the tinted badge */
 
     color-scheme: dark;
   }
