@@ -12,6 +12,8 @@ import {
   isOnTime,
   monthlyStats,
   onTimeRate,
+  openTaskCount,
+  periodComparison,
   scheduledRate,
   tasksPerDay,
   topTags,
@@ -246,5 +248,82 @@ describe("monthlyStats", () => {
     expect(stats.totalCarried).toBe(1);
     expect(stats.completionRate).toBe(50);
     expect(stats.topTags).toEqual([{ tag: "x", count: 1 }]);
+  });
+});
+
+describe("periodComparison", () => {
+  /*
+   * Windows are whole calendar days, so the clock time inside the day must
+   * not change which window a task lands in. These timestamps are built in
+   * local time for the same reason the carry-over tests are: a fixed UTC
+   * string lands on the previous day for anyone west of Greenwich.
+   */
+  const today = new Date(2026, 5, 16, 12, 0);
+  const at = (daysAgo: number, hour = 12): string =>
+    new Date(2026, 5, 16 - daysAgo, hour).toISOString();
+
+  it("counts the last 7 days against the 7 before them", () => {
+    const tasks = [
+      makeTask({ createdAt: at(0) }),
+      makeTask({ createdAt: at(6, 23) }),
+      makeTask({ createdAt: at(7) }),
+      makeTask({ createdAt: at(13) }),
+      makeTask({ createdAt: at(14) }), // older than both windows
+    ];
+
+    const { created } = periodComparison(tasks, 7, today);
+    expect(created.current).toBe(2);
+    expect(created.previous).toBe(2);
+    expect(created.changePct).toBe(0);
+  });
+
+  it("counts completions by when they were completed, not created", () => {
+    const tasks = [
+      makeTask({ createdAt: at(20), status: "done", completedAt: at(1) }),
+      makeTask({ createdAt: at(1), status: "done", completedAt: at(9) }),
+      // Done-but-unstamped and open tasks are not completions.
+      makeTask({ createdAt: at(1), status: "done", completedAt: null }),
+      makeTask({ createdAt: at(1) }),
+    ];
+
+    const { completed } = periodComparison(tasks, 7, today);
+    expect(completed.current).toBe(1);
+    expect(completed.previous).toBe(1);
+  });
+
+  it("reports a percentage change against the earlier window", () => {
+    const tasks = [
+      makeTask({ createdAt: at(0) }),
+      makeTask({ createdAt: at(1) }),
+      makeTask({ createdAt: at(2) }),
+      makeTask({ createdAt: at(8) }),
+    ];
+
+    expect(periodComparison(tasks, 7, today).created.changePct).toBe(200);
+  });
+
+  it("leaves the change null when the earlier window was empty", () => {
+    // "Up 100%" from nothing is arithmetic, not information.
+    const tasks = [makeTask({ createdAt: at(0) })];
+    const { created } = periodComparison(tasks, 7, today);
+    expect(created.previous).toBe(0);
+    expect(created.changePct).toBeNull();
+  });
+
+  it("ignores an unparseable timestamp rather than counting it as now", () => {
+    const tasks = [makeTask({ createdAt: "not a date" })];
+    expect(periodComparison(tasks, 7, today).created.current).toBe(0);
+  });
+});
+
+describe("openTaskCount", () => {
+  it("counts todo and in-progress, not done or cancelled", () => {
+    const tasks = [
+      makeTask({ status: "todo" }),
+      makeTask({ status: "in_progress" }),
+      makeTask({ status: "done" }),
+      makeTask({ status: "cancelled" }),
+    ];
+    expect(openTaskCount(tasks)).toBe(2);
   });
 });

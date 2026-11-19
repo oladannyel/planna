@@ -12,6 +12,11 @@ import { useTheme } from "@/components/theme";
  * left the charts dark-only — this reads the same CSS custom properties the
  * rest of the app themes through, and recomputes whenever the theme changes.
  * One source of truth, in `globals.css`.
+ *
+ * The series colours come from `--color-chart-*`, not from the UI accents. A
+ * series colour has to clear a chroma floor and a CVD separation gate against
+ * the series beside it; an accent is picked to look right as a button. The
+ * two happen to be the same hue here and are not the same value.
  */
 export interface ChartPalette {
   grid: string;
@@ -34,7 +39,7 @@ const FALLBACK: ChartPalette = {
   grid: "rgb(30 30 46)",
   axis: "rgb(148 163 184)",
   tooltipBg: "rgb(23 23 31)",
-  tooltipBorder: "rgb(30 30 46)",
+  tooltipBorder: "rgb(107 107 133)",
   tooltipText: "rgb(248 250 252)",
   series: "rgb(124 58 237)",
   seriesAlt: "rgb(13 148 136)",
@@ -47,10 +52,10 @@ export function readChartPalette(): ChartPalette {
     grid: readChannels(styles, "--color-border", FALLBACK.grid),
     axis: readChannels(styles, "--color-text-secondary", FALLBACK.axis),
     tooltipBg: readChannels(styles, "--color-card", FALLBACK.tooltipBg),
-    tooltipBorder: readChannels(styles, "--color-border", FALLBACK.tooltipBorder),
+    tooltipBorder: readChannels(styles, "--color-field-border", FALLBACK.tooltipBorder),
     tooltipText: readChannels(styles, "--color-text-primary", FALLBACK.tooltipText),
-    series: readChannels(styles, "--color-purple", FALLBACK.series),
-    seriesAlt: readChannels(styles, "--color-teal", FALLBACK.seriesAlt),
+    series: readChannels(styles, "--color-chart-1", FALLBACK.series),
+    seriesAlt: readChannels(styles, "--color-chart-2", FALLBACK.seriesAlt),
   };
 }
 

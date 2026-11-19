@@ -1,3 +1,5 @@
+import { ComponentCard } from "@/components/ui";
+
 interface OnTimeRateCardProps {
   onTimeRate: number;
   scheduledRate: number;
@@ -5,11 +7,38 @@ interface OnTimeRateCardProps {
   carryoverRate: number;
 }
 
-function Stat({ label, value, tone }: { label: string; value: number; tone: string }) {
+/**
+ * Four ratios, each against its own whole — the shape a meter list is for.
+ *
+ * They were four bare percentages in a row, which gave the eye nothing to
+ * compare: 80% and 33% sat at the same size in the same weight, and the
+ * reader had to do the ranking. A track per row does that work, and the
+ * figure stays beside it for the exact value.
+ *
+ * One hue across all four rows, deliberately. These are not four series —
+ * giving each its own colour would say they are different kinds of thing and
+ * invite the reader to look for meaning in the palette.
+ */
+function Meter({ label, value, hint }: { label: string; value: number; hint: string }) {
   return (
     <div>
-      <p className={`text-2xl font-bold ${tone}`}>{value}%</p>
-      <p className="text-xs text-text-secondary">{label}</p>
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-sm text-text-secondary">{label}</p>
+        <p className="font-display text-sm font-semibold tabular-nums text-text-primary">
+          {value}%
+        </p>
+      </div>
+      <div
+        className="mt-2 h-2 w-full overflow-hidden rounded-full bg-field"
+        role="meter"
+        aria-valuenow={value}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`${label}: ${value} percent`}
+      >
+        <div className="h-full rounded-full bg-chart-1" style={{ width: `${value}%` }} />
+      </div>
+      <p className="mt-1.5 text-xs text-text-muted">{hint}</p>
     </div>
   );
 }
@@ -21,18 +50,19 @@ export function OnTimeRateCard({
   carryoverRate,
 }: OnTimeRateCardProps) {
   return (
-    <div className="surface p-4">
-      <h3 className="mb-3 text-sm font-medium text-text-secondary">Rates</h3>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Stat label="On time" value={onTimeRate} tone="text-teal" />
-        <Stat label="Scheduled" value={scheduledRate} tone="text-text-primary" />
-        <Stat label="Completed" value={completionRate} tone="text-purple-ink" />
-        <Stat label="Carried over" value={carryoverRate} tone="text-amber" />
-      </div>
-      <p className="mt-3 text-xs text-text-muted">
-        On-time counts only tasks that had a deadline. Scheduled shows how much of your work has a
-        deadline set.
-      </p>
-    </div>
+    <ComponentCard
+      title="Rates"
+      description="How the work is going, as shares rather than counts."
+      contentClassName="space-y-5 px-5 pb-5"
+    >
+      <Meter label="On time" value={onTimeRate} hint="Of completed tasks that had a deadline." />
+      <Meter
+        label="Scheduled"
+        value={scheduledRate}
+        hint="Share of your work with a deadline set."
+      />
+      <Meter label="Completed" value={completionRate} hint="Share of all tasks finished." />
+      <Meter label="Carried over" value={carryoverRate} hint="Tasks that outlived the day." />
+    </ComponentCard>
   );
 }

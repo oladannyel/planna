@@ -26,7 +26,9 @@ function readThemeTokens(): { LIGHT: Record<string, Rgb>; DARK: Record<string, R
     if (/^\s*:root\s*\{/.test(line)) current = "light";
     else if (/^\s*\.dark\s*\{/.test(line)) current = "dark";
 
-    const match = line.match(/--color-([a-z-]+):\s*(\d+)\s+(\d+)\s+(\d+)\s*;/);
+    // Digits in the name too: `--color-chart-1` would otherwise be skipped,
+    // and a token this suite never reads is a token it never guards.
+    const match = line.match(/--color-([a-z0-9-]+):\s*(\d+)\s+(\d+)\s+(\d+)\s*;/);
     if (match && current) {
       const [, name, r, g, b] = match;
       themes[current]![name!] = [Number(r), Number(g), Number(b)];
@@ -47,6 +49,7 @@ const FOREGROUNDS = [
   "text-muted",
   "purple-ink",
   "teal",
+  "teal-ink",
   "amber",
   "danger-ink",
 ] as const;
@@ -136,6 +139,29 @@ describe("palette meets WCAG AA", () => {
         ).toBeGreaterThanOrEqual(AA_LARGE);
       }
     });
+  }
+
+  /*
+   * Chart marks are not text, so AA does not apply to them — but a series
+   * that sits under 3:1 on its own card is a bar you cannot see, which is the
+   * same defect the fields had. The separation BETWEEN the two series (CVD
+   * ΔE, chroma floor) was checked with the data-viz palette validator when
+   * the tokens were chosen; that maths does not belong in this file, but the
+   * surface contrast does, because it is the part a token edit breaks.
+   */
+  for (const theme of [
+    { name: "light", tokens: LIGHT },
+    { name: "dark", tokens: DARK },
+  ]) {
+    for (const series of ["chart-1", "chart-2"] as const) {
+      it(`${theme.name}: ${series} is visible on the card`, () => {
+        const ratio = contrastRatio(theme.tokens[series] as Rgb, theme.tokens["card"] as Rgb);
+        expect(
+          ratio,
+          `${series} on card in ${theme.name} is ${ratio.toFixed(2)}:1, below ${AA_LARGE}:1`,
+        ).toBeGreaterThanOrEqual(AA_LARGE);
+      });
+    }
   }
 
   it("keeps white legible on the purple button fill in both themes", () => {

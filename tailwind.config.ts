@@ -33,6 +33,9 @@ const config: Config = {
         // Form fields read as their own surface; see globals.css.
         field: semantic("--color-field"),
         "field-border": semantic("--color-field-border"),
+        // Chart series; see globals.css for why these are not the accents.
+        "chart-1": semantic("--color-chart-1"),
+        "chart-2": semantic("--color-chart-2"),
         "text-primary": semantic("--color-text-primary"),
         "text-secondary": semantic("--color-text-secondary"),
         "text-muted": semantic("--color-text-muted"),
@@ -42,6 +45,7 @@ const config: Config = {
         // Accent-as-text variants; see globals.css for why these are separate.
         "purple-ink": semantic("--color-purple-ink"),
         "danger-ink": semantic("--color-danger-ink"),
+        "teal-ink": semantic("--color-teal-ink"),
         teal: semantic("--color-teal"),
         amber: semantic("--color-amber"),
         danger: semantic("--color-danger"),
