@@ -3,6 +3,8 @@
 import { LogOut, Menu, Search } from "lucide-react";
 
 import { ThemeToggler } from "@/components/theme";
+import { FIELD_BASE } from "@/components/ui/Input";
+import { cn } from "@/lib/cn";
 
 import { useSidebar } from "./SidebarProvider";
 
@@ -30,7 +32,7 @@ export function TopBar({ email }: { email: string }) {
           type="search"
           placeholder="Search tasks…"
           aria-label="Search tasks"
-          className="w-full rounded-lg border border-border bg-canvas py-2 pe-3 ps-9 text-sm text-text-primary outline-none transition-colors placeholder:text-text-muted focus:border-purple focus:ring-4 focus:ring-purple/10"
+          className={cn(FIELD_BASE, "py-2 pe-3 ps-9")}
         />
       </div>
 

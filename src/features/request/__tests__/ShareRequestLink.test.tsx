@@ -2,7 +2,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { ShareRequestLink } from "../ShareRequestLink";
+const h = vi.hoisted(() => ({ setRequestDisplayName: vi.fn() }));
+
+vi.mock("../display-name", () => ({ setRequestDisplayName: h.setRequestDisplayName }));
+
+const { ShareRequestLink } = await import("../ShareRequestLink");
 
 const URL_UNDER_TEST = "https://planna-puce.vercel.app/request/daniel-a1b2";
 
@@ -115,5 +119,38 @@ describe("ShareRequestLink", () => {
     await user.type(field, "junk");
 
     expect(field).toHaveValue(URL_UNDER_TEST);
+  });
+});
+
+describe("ShareRequestLink display name", () => {
+  it("saves the name the public form will greet requesters with", async () => {
+    h.setRequestDisplayName.mockReset();
+    h.setRequestDisplayName.mockResolvedValue({ ok: true, value: { name: "Daniel" } });
+    const { user } = setup();
+    render(<ShareRequestLink url={URL_UNDER_TEST} displayName="" />);
+
+    await user.click(screen.getByRole("button", { name: "Share link" }));
+    await user.type(screen.getByLabelText(/Requesters see/), "Daniel");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => {
+      expect(h.setRequestDisplayName).toHaveBeenCalledWith("Daniel");
+    });
+  });
+
+  it("surfaces a failure instead of pretending the name was saved", async () => {
+    h.setRequestDisplayName.mockReset();
+    h.setRequestDisplayName.mockResolvedValue({
+      ok: false,
+      error: { code: "DB_ERROR", message: "Could not save that." },
+    });
+    const { user } = setup();
+    render(<ShareRequestLink url={URL_UNDER_TEST} displayName="Dan" />);
+
+    await user.click(screen.getByRole("button", { name: "Share link" }));
+    await user.type(screen.getByLabelText(/Requesters see/), "iel");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Could not save that.")).toBeInTheDocument();
   });
 });

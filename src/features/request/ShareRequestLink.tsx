@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { FIELD_BASE } from "@/components/ui/Input";
 import { cn } from "@/lib/cn";
 
+import { setRequestDisplayName } from "./display-name";
+
 /**
  * The request link, shown so it can be read and copied.
  *
@@ -17,16 +19,40 @@ import { cn } from "@/lib/cn";
  * and selectable, and the clipboard is the convenience on top of it rather
  * than the only way out.
  */
-export function ShareRequestLink({ url }: { url: string }) {
+export function ShareRequestLink({
+  url,
+  displayName = null,
+}: {
+  url: string;
+  displayName?: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [name, setName] = useState(displayName ?? "");
+  const [savedName, setSavedName] = useState(displayName ?? "");
+  const [savingName, setSavingName] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
   const fieldId = useId();
+  const nameId = useId();
   const fieldRef = useRef<HTMLInputElement>(null);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function selectAll(): void {
     fieldRef.current?.focus();
     fieldRef.current?.select();
+  }
+
+  async function saveName(): Promise<void> {
+    setSavingName(true);
+    setNameError(null);
+    const result = await setRequestDisplayName(name);
+    setSavingName(false);
+    if (result.ok) {
+      setName(result.value.name);
+      setSavedName(result.value.name);
+    } else {
+      setNameError(result.error.message);
+    }
   }
 
   async function copy(): Promise<void> {
@@ -59,8 +85,7 @@ export function ShareRequestLink({ url }: { url: string }) {
         id={fieldId}
         hidden={!open}
         className={cn(
-          "surface absolute end-0 z-20 mt-2 w-[min(22rem,calc(100vw-2rem))] p-4",
-          "shadow-theme-lg",
+          "surface dialog-panel absolute end-0 z-20 mt-2 w-[min(22rem,calc(100vw-2rem))] p-4",
         )}
       >
         <p className="text-sm font-medium text-text-primary">Send me a task</p>
@@ -92,6 +117,37 @@ export function ShareRequestLink({ url }: { url: string }) {
           >
             {copied ? "Copied" : "Copy"}
           </Button>
+        </div>
+
+        {/*
+          The form greets submitters by name, so the name has to be settable
+          from somewhere. Here is where the link is handed out, which is the
+          moment the owner cares what it will say.
+        */}
+        <div className="mt-4 border-t border-border pt-3">
+          <label htmlFor={nameId} className="text-xs font-medium text-text-secondary">
+            Requesters see &ldquo;Submit a request to&hellip;&rdquo;
+          </label>
+          <div className="mt-1.5 flex items-center gap-2">
+            <input
+              id={nameId}
+              value={name}
+              maxLength={60}
+              placeholder="Your name"
+              onChange={(event) => setName(event.target.value)}
+              className={cn(FIELD_BASE, "px-3 py-2 text-xs")}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              disabled={savingName || name.trim() === savedName.trim() || name.trim() === ""}
+              onClick={() => void saveName()}
+            >
+              {savingName ? "Saving…" : "Save"}
+            </Button>
+          </div>
+          {nameError ? <p className="mt-1 text-xs text-danger-ink">{nameError}</p> : null}
         </div>
 
         {/* Announced rather than only coloured, so the confirmation is not

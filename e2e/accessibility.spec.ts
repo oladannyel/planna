@@ -69,6 +69,53 @@ test.describe("accessibility", () => {
     }
   });
 
+  /*
+   * The public request form is the one page in this app that strangers see,
+   * and it was the only rendered page no scan covered. It is also where the
+   * invisible-field defect showed first: inputs drawn in the card's own
+   * colour behind a 1.1:1 border.
+   */
+  test("the public request form has no violations, in both themes", async ({ page }) => {
+    await page.goto("/request/demo");
+
+    for (const theme of ["dark", "light"] as const) {
+      await page.emulateMedia({ colorScheme: theme });
+      const results = await new AxeBuilder({ page })
+        .withTags(WCAG)
+        .disableRules(KNOWN_DEFECTS)
+        .analyze();
+      expect(
+        results.violations,
+        formatViolations(theme, "/request/demo", results.violations),
+      ).toEqual([]);
+    }
+  });
+
+  /*
+   * A dialog is rendered only once it is opened, so a scan of /board never
+   * reached the task editor — the densest form in the app.
+   */
+  test("the task editor dialog has no violations, in both themes", async ({ page }) => {
+    await signIn(page);
+    await page.goto("/board");
+    await page.locator('[aria-roledescription="draggable"]').first().click();
+
+    const dialog = page.getByRole("dialog", { name: "Edit task" });
+    await expect(dialog).toBeVisible();
+
+    for (const theme of ["dark", "light"] as const) {
+      await page.emulateMedia({ colorScheme: theme });
+      const results = await new AxeBuilder({ page })
+        .withTags(WCAG)
+        .disableRules(KNOWN_DEFECTS)
+        .analyze();
+      expect(
+        results.violations,
+        formatViolations(theme, "task editor", results.violations),
+      ).toEqual([]);
+    }
+  });
+
   for (const path of AUTHENTICATED_PAGES) {
     test(`${path} has no violations`, async ({ page }) => {
       await signIn(page);

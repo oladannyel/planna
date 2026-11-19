@@ -36,7 +36,13 @@ function submitErrorMessage(error: AppError): string {
   }
 }
 
-export function RequestForm({ slug }: { slug: string }) {
+/**
+ * The public request form.
+ *
+ * `ownerName` is whoever handed out the link. The submitter is writing to a
+ * person, not to a system, and the heading says so.
+ */
+export function RequestForm({ slug, ownerName }: { slug: string; ownerName?: string | null }) {
   const [requesterName, setRequesterName] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -85,17 +91,21 @@ export function RequestForm({ slug }: { slug: string }) {
         event.preventDefault();
         void submit();
       }}
-      className="surface space-y-4 p-6"
+      className="surface space-y-5 p-6 shadow-theme-xl sm:p-7"
     >
       <div>
-        <h1 className="font-display text-title-md font-bold text-text-primary">Submit a request</h1>
+        <h1 className="font-display text-title-md font-bold text-text-primary">
+          {ownerName ? `Submit a request to ${ownerName}` : "Submit a request"}
+        </h1>
         <p className="mt-1 text-sm text-text-secondary">
-          Describe what you need and it&apos;ll be added to the planning board.
+          {ownerName
+            ? `Describe what you need and it'll go straight to ${ownerName}'s planning board.`
+            : "Describe what you need and it'll be added to the planning board."}
         </p>
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="requesterName" className="text-sm text-text-secondary">
+        <label htmlFor="requesterName" className="block text-sm font-medium text-text-secondary">
           Your name
         </label>
         <input
@@ -108,7 +118,7 @@ export function RequestForm({ slug }: { slug: string }) {
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="title" className="text-sm text-text-secondary">
+        <label htmlFor="title" className="block text-sm font-medium text-text-secondary">
           Title
         </label>
         <input
@@ -121,7 +131,7 @@ export function RequestForm({ slug }: { slug: string }) {
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="description" className="text-sm text-text-secondary">
+        <label htmlFor="description" className="block text-sm font-medium text-text-secondary">
           Details
         </label>
         <Textarea
@@ -135,7 +145,7 @@ export function RequestForm({ slug }: { slug: string }) {
 
       <div className="flex gap-3">
         <div className="flex-1 space-y-1">
-          <label htmlFor="urgency" className="text-sm text-text-secondary">
+          <label htmlFor="urgency" className="block text-sm font-medium text-text-secondary">
             Urgency
           </label>
           <select
@@ -154,7 +164,10 @@ export function RequestForm({ slug }: { slug: string }) {
           </select>
         </div>
         <div className="flex-1 space-y-1">
-          <label htmlFor="desiredDeadline" className="text-sm text-text-secondary">
+          <label
+            htmlFor="desiredDeadline"
+            className="block text-sm font-medium text-text-secondary"
+          >
             Deadline (optional)
           </label>
           <input

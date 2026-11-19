@@ -23,6 +23,15 @@
     --color-text-secondary: 71 84 103; /* gray-600    */
     --color-text-muted: 102 112 133; /* gray-500    */
 
+    /*
+     * Form fields are a surface of their own, not the card they sit on.
+     * Giving an input the card's own background left it invisible: the only
+     * thing marking it out was a border one step off the card, and on the
+     * public request form that read as a page with no fields on it at all.
+     */
+    --color-field: 242 244 247; /* gray-100 */
+    --color-field-border: 129 141 160; /* 3.36:1 on card — WCAG 1.4.11 */
+
     /* Accents tuned for contrast on light surfaces */
     --color-purple: 109 40 217; /* brand-700 */
     --color-teal: 15 118 110;
@@ -46,10 +55,19 @@
     --color-canvas: 15 15 19; /* #0F0F13 */
     --color-card: 23 23 31; /* #17171F   */
     --color-card-hover: 30 30 46; /* #1E1E2E */
-    --color-border: 30 30 46; /* #1E1E2E   */
+    /*
+     * Was #1E1E2E — the same value as card-hover and barely a step from the
+     * card itself (1.1:1), so panel edges, dialog edges and table rules all
+     * disappeared. #2C2C3C is still quiet but actually draws a line.
+     */
+    --color-border: 44 44 60; /* #2C2C3C   */
     --color-text-primary: 248 250 252; /* #F8FAFC */
     --color-text-secondary: 148 163 184; /* #94A3B8 */
     --color-text-muted: 126 140 160; /* #7E8CA0 — 5.21:1 on card, AA */
+
+    /* See the light block: a field is its own surface. */
+    --color-field: 34 34 46; /* #22222E */
+    --color-field-border: 107 107 133; /* #6B6B85 — 3.45:1 on card */
 
     /* Accents brightened for dark surfaces */
     --color-purple: 124 58 237; /* #7C3AED */
@@ -156,6 +174,22 @@
   /* Card surface — the base shape every panel in the app shares. */
   .surface {
     @apply rounded-2xl border border-border bg-card shadow-theme-sm;
+  }
+
+  /*
+   * Dialog chrome, shared by every modal surface so they cannot drift.
+   *
+   * The backdrop was bg-black/50 with nothing behind it on a near-black
+   * canvas, which separated the dialog from the page by almost nothing. A
+   * heavier scrim plus a blur is what makes the panel read as being in front
+   * of the page rather than part of it.
+   */
+  .overlay-backdrop {
+    @apply bg-gray-950/70 backdrop-blur-sm;
+  }
+
+  .dialog-panel {
+    @apply border-field-border/40 bg-card shadow-theme-xl;
   }
 
   .surface-hover {

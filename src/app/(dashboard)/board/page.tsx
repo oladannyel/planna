@@ -1,6 +1,11 @@
 import { PageHeader } from "@/components/layout";
 import { KanbanBoard } from "@/features/board";
-import { ShareRequestLink, publicOrigin, requestLinkFor } from "@/features/request";
+import {
+  ShareRequestLink,
+  ownerDisplayName,
+  publicOrigin,
+  requestLinkFor,
+} from "@/features/request";
 import { QuickAdd } from "@/features/tasks/QuickAdd";
 import { TaskSheetProvider } from "@/features/tasks/TaskSheetProvider";
 import { getTasks } from "@/features/tasks/queries";
@@ -21,12 +26,19 @@ export default async function BoardPage() {
   // extra query.
   const requestLink = ctx.ok ? requestLinkFor(await publicOrigin(), ctx.value.workspaceSlug) : null;
 
+  // What the public form will call the owner, so the share popover can show
+  // it and let them change it.
+  const user = ctx.ok ? (await ctx.value.supabase.auth.getUser()).data.user : null;
+  const displayName = ownerDisplayName(user?.user_metadata ?? null, null);
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Board"
         crumbs={[{ label: "Home", href: "/" }, { label: "Board" }]}
-        {...(requestLink ? { action: <ShareRequestLink url={requestLink} /> } : {})}
+        {...(requestLink
+          ? { action: <ShareRequestLink url={requestLink} displayName={displayName} /> }
+          : {})}
       />
       <QuickAdd />
       <TaskSheetProvider>

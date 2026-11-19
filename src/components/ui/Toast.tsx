@@ -65,7 +65,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               if (!open) setItems((prev) => prev.filter((i) => i.id !== item.id));
             }}
             className={cn(
-              "rounded-xl border bg-card p-3 text-text-primary shadow-lg",
+              "rounded-xl border bg-card p-3 text-text-primary shadow-theme-xl",
               TONE_CLASS[item.tone],
             )}
           >

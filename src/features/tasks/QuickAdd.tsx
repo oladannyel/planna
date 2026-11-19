@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { FIELD_BASE } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import type { AppError } from "@/lib/result";
 
@@ -49,8 +50,7 @@ function thrownMessage(cause: unknown): string {
   return "Couldn't reach the server. Check your connection and try again.";
 }
 
-const FIELD =
-  "w-full rounded-xl border border-border bg-canvas px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-purple";
+const FIELD = FIELD_BASE;
 
 export function QuickAdd() {
   const [text, setText] = useState("");

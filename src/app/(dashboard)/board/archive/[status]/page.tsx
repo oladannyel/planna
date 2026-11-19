@@ -2,10 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/layout";
+import { FIELD_BASE } from "@/components/ui/Input";
 import { TaskCard } from "@/features/tasks/TaskCard";
 import { TaskSheetProvider } from "@/features/tasks/TaskSheetProvider";
 import { getTasksByStatus } from "@/features/tasks/queries";
 import { isTaskStatus, TASK_STATUS_LABELS } from "@/features/tasks/status";
+import { cn } from "@/lib/cn";
 
 const PAGE_SIZE = 20;
 
@@ -59,7 +61,7 @@ export default async function StatusArchivePage({
           name="q"
           defaultValue={search}
           placeholder={`Search ${lowerLabel} tasks…`}
-          className="w-full max-w-sm rounded-lg border border-border bg-card px-3.5 py-2.5 text-sm text-text-primary shadow-theme-xs outline-none transition-colors placeholder:text-text-muted focus:border-purple focus:ring-4 focus:ring-purple/10"
+          className={cn(FIELD_BASE, "max-w-sm")}
         />
         <button
           type="submit"
