@@ -19,6 +19,16 @@ beforeEach(() => {
 });
 
 describe("RequestForm", () => {
+  it("names the person the link belongs to", () => {
+    render(<RequestForm slug="demo" ownerName="Daniel" />);
+    expect(screen.getByRole("heading", { name: "Submit a request to Daniel" })).toBeInTheDocument();
+  });
+
+  it("stays anonymous when the owner has no name to show", () => {
+    render(<RequestForm slug="demo" ownerName={null} />);
+    expect(screen.getByRole("heading", { name: "Submit a request" })).toBeInTheDocument();
+  });
+
   it("submits the form with the workspace slug and shows success", async () => {
     h.submitRequest.mockResolvedValue({ ok: true, value: { taskId: "t1" } });
     const user = userEvent.setup();

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { FIELD_BASE } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
 
 import { GoogleMark } from "./GoogleMark";
@@ -117,7 +118,7 @@ export default function LoginPage() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="you@example.com"
-          className="w-full rounded-lg border border-border bg-canvas px-3.5 py-2.5 text-sm text-text-primary shadow-theme-xs outline-none transition-colors placeholder:text-text-muted focus:border-purple focus:ring-4 focus:ring-purple/10"
+          className={FIELD_BASE}
         />
         <button
           type="submit"

@@ -30,6 +30,9 @@ const config: Config = {
         card: semantic("--color-card"),
         border: semantic("--color-border"),
         "card-hover": semantic("--color-card-hover"),
+        // Form fields read as their own surface; see globals.css.
+        field: semantic("--color-field"),
+        "field-border": semantic("--color-field-border"),
         "text-primary": semantic("--color-text-primary"),
         "text-secondary": semantic("--color-text-secondary"),
         "text-muted": semantic("--color-text-muted"),

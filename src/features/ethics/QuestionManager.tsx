@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { FIELD_BASE } from "@/components/ui/Input";
 
 import { addQuestion, deactivateQuestion } from "./actions";
 import type { EthicsQuestion } from "./types";
@@ -62,7 +63,7 @@ export function QuestionManager({ questions }: { questions: EthicsQuestion[] }) 
           onChange={(event) => setText(event.target.value)}
           placeholder="Add a reflection question"
           aria-label="New reflection question"
-          className="w-full rounded-xl border border-border bg-canvas px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-purple"
+          className={FIELD_BASE}
         />
         <Button type="submit" disabled={busy || trimmed.length === 0}>
           Add

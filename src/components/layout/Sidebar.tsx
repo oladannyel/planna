@@ -145,13 +145,13 @@ export function Sidebar({ workspaceName }: { workspaceName: string }) {
             type="button"
             aria-label="Close navigation"
             onClick={() => setMobileOpen(false)}
-            className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+            className="overlay-backdrop absolute inset-0"
           />
           <aside
             role="dialog"
             aria-modal="true"
             aria-label="Navigation"
-            className="absolute inset-y-0 start-0 flex w-[280px] flex-col gap-6 border-e border-border bg-card px-4 py-5"
+            className="dialog-panel absolute inset-y-0 start-0 flex w-[280px] flex-col gap-6 border-e px-4 py-5"
           >
             <div className="flex items-center justify-between">
               <SidebarBrand workspaceName={workspaceName} />

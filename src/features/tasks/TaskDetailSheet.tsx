@@ -4,13 +4,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { FIELD_BASE } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 
 import { deleteTask, updateTask, updateTaskStatus } from "./actions";
 import type { Task, TaskPriority, TaskStatus } from "./types";
 
-const FIELD =
-  "w-full rounded-xl border border-border bg-canvas px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-purple";
+// The sheet shares the app's field chrome rather than keeping its own copy;
+// the copy it used to hold is how its inputs ended up invisible on dark.
+const FIELD = FIELD_BASE;
 
 const PRIORITIES: TaskPriority[] = ["low", "medium", "high", "urgent"];
 const STATUSES: { value: TaskStatus; label: string }[] = [
@@ -128,7 +130,12 @@ export function TaskDetailSheet({ task, onClose }: { task: Task; onClose: () => 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+    /*
+      z-999, not z-50: the sticky TopBar is z-99, so at z-50 the header sat on
+      top of the open dialog and clipped its heading. A modal belongs above
+      every piece of page chrome — it is the thing in front.
+    */
+    <div className="fixed inset-0 z-999 flex justify-end">
       {/*
         The dismiss backdrop is a real <button>, not a div with onClick. As a
         div it was unreachable by keyboard and invisible to assistive tech, so
@@ -139,14 +146,14 @@ export function TaskDetailSheet({ task, onClose }: { task: Task; onClose: () => 
       <button
         type="button"
         aria-label="Close task editor"
-        className="absolute inset-0 h-full w-full cursor-default bg-black/50"
+        className="overlay-backdrop absolute inset-0 h-full w-full cursor-default"
         onClick={onClose}
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Edit task"
-        className="relative flex h-full w-full max-w-md flex-col gap-4 overflow-y-auto border-l border-border bg-card p-5 shadow-xl"
+        className="dialog-panel relative flex h-full w-full max-w-md flex-col gap-4 overflow-y-auto border-s p-5"
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Edit task</h2>
