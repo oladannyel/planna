@@ -25,7 +25,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and the daily cron drains the backlog once a key exists.
 
 - **Email task intake.** Connect a Gmail account under Settings → Email
-  intake, label a message `plAnna`, and an hourly cron turns it into a task
+  intake, label a message `plAnna`, and a daily cron turns it into a task
   with the usual parsing. The refresh token is encrypted at rest with
   `EMAIL_TOKEN_KEY` (AES-256-GCM), the scope is `gmail.modify` — read the
   labelled messages and drop the label, never delete or send — and

@@ -41,8 +41,12 @@ Poll Gmail over OAuth, on the existing cron schedule.
 
 - **No DNS, no inbound provider, no new public webhook.** The only new unauthenticated
   surface is the cron route, which already has a `CRON_SECRET` pattern to copy.
-- **Latency is the poll interval**, not seconds. Email-to-task is not interactive work;
-  an hourly poll is honest about what it is.
+- **Latency is the poll interval**, not seconds. Email-to-task is not interactive work,
+  so a scheduled poll is honest about what it is. The interval is the hosting plan's,
+  not ours: a Hobby account rejects the deployment for any cron that fires more than
+  once a day ("Hobby accounts are limited to daily cron jobs"), so the shipped schedule
+  is daily at 06:30 UTC. On Pro, change the one expression in `vercel.json` to hourly;
+  the poll is idempotent and bounded, so nothing else has to change.
 - **A refresh token for a personal mailbox now exists in the database.** It is encrypted
   with a key held only in the environment, never logged, never returned to the client,
   and revocable from the settings page and from the Google account page. If

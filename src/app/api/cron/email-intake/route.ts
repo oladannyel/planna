@@ -20,7 +20,14 @@ function bearerMatches(header: string | null, secret: string): boolean {
 }
 
 /**
- * Hourly Gmail poll (ADR 0002).
+ * Scheduled Gmail poll (ADR 0002).
+ *
+ * Daily, at 06:30 UTC. Hourly is what this wants to be and what the Pro plan
+ * allows; a Hobby account refuses the *deployment* outright for any cron
+ * expression that fires more than once a day — "Hobby accounts are limited to
+ * daily cron jobs" — so the schedule in `vercel.json` is the plan's ceiling,
+ * not a design decision. Raise it to `0 * * * *` on Pro and nothing else here
+ * changes: the poll is idempotent and bounded either way.
  *
  * Fails closed without a `CRON_SECRET`: this route reads people's mailboxes,
  * and an unauthenticated endpoint that does that is worse than a feature that

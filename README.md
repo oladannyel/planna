@@ -30,7 +30,7 @@ It was built for one person's daily work across many parallel projects. It gener
 | **Monthly & AI reports**     | Generated narrative summaries of a period's work, built from your own task history.                                                                                                                                                                                                          |
 | **Ethics check-in**          | A configurable reflection prompt set — the part of the tool that asks questions back.                                                                                                                                                                                                        |
 | **Request links**            | A public `/request/[slug]` link so colleagues can file a task into your board without an account. Nothing reaches the board un-triaged: a request waits in an inbox, you accept or decline it, and the person who asked is emailed at every step and can follow it on a private status page. |
-| **Email task intake**        | Connect a Gmail account, label a message, and an hourly job turns it into a task — parsed like anything else you type.                                                                                                                                                                       |
+| **Email task intake**        | Connect a Gmail account, label a message, and a scheduled job turns it into a task — parsed like anything else you type. Daily on Vercel's Hobby plan, which allows no finer; hourly is one line of `vercel.json` on Pro.                                                                    |
 
 ## Screenshots
 
