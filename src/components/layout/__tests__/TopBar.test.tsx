@@ -3,6 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ThemeProvider } from "@/components/theme";
 
+// The bell is a client component that calls a server action when opened;
+// neither resolves in jsdom. This file tests the bar's own chrome.
+vi.mock("@/features/notifications/NotificationBell", () => ({
+  NotificationBell: () => <button type="button">Notifications</button>,
+}));
+
 import { SidebarProvider } from "../SidebarProvider";
 import { TopBar } from "../TopBar";
 

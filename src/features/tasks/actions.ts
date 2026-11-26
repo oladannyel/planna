@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { notifyRequesterOfTaskStatus } from "@/features/request/progress";
 import { getAuthedContext } from "@/features/workspace/queries";
 import { err, ok } from "@/lib/result";
 import type { Result } from "@/lib/result";
@@ -53,9 +54,15 @@ function revalidateTaskViews(): void {
   revalidatePath("/analytics");
 }
 
+export interface CreateTaskOptions {
+  /** Who asked for it, when the task comes from a request link or an email. */
+  requestedBy?: string;
+}
+
 export async function createTask(
   input: TaskInput,
   source: TaskSource = "manual",
+  options: CreateTaskOptions = {},
 ): Promise<Result<Task>> {
   const validated = taskInputSchema.safeParse(input);
   if (!validated.success) {
@@ -86,6 +93,7 @@ export async function createTask(
       due_at: deadline.dueAt,
       estimated_minutes: validated.data.estimatedMinutes ?? null,
       source,
+      requested_by: options.requestedBy ?? null,
       completed_at: completedAt,
       status_history: [statusEntry(status)],
     })
@@ -172,6 +180,11 @@ export async function updateTaskStatus(taskId: string, status: TaskStatus): Prom
   if (error) {
     return err({ code: "DB_ERROR", message: error.message });
   }
+
+  // If this task came from a request link, its requester is waiting to hear
+  // exactly this. Awaited so the mail is queued before the action returns,
+  // and non-fatal inside (see `notifyRequesterOfTaskStatus`).
+  await notifyRequesterOfTaskStatus(taskId, status);
 
   revalidateTaskViews();
   return ok(rowToTask(data));

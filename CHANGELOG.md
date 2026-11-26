@@ -6,6 +6,33 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Requests wait for a decision.** A colleague filing work through your share
+  link used to write straight onto your board. A submission now records a
+  pending request, the bell in the top bar and an email tell you it arrived,
+  and `/requests` is where you accept it — which creates the task — or decline
+  it with a reason. Accepting is also where the AI parse now happens, so an
+  unauthenticated caller can no longer spend a model call. See
+  [ADR 0001](docs/adr/0001-request-approval-inbox.md).
+
+- **The person who asked is kept informed.** They can give an email address
+  (optional) and are written to when the request is received, accepted or
+  declined, and each time the resulting task moves — in progress, done,
+  cancelled. Either way the submit screen hands them a private status page,
+  `/request/status/<token>`, that follows the work without an account. Mail
+  goes out through Resend; without `RESEND_API_KEY` it queues in `email_outbox`
+  and the daily cron drains the backlog once a key exists.
+
+- **Email task intake.** Connect a Gmail account under Settings → Email
+  intake, label a message `plAnna`, and a daily cron turns it into a task
+  with the usual parsing. The refresh token is encrypted at rest with
+  `EMAIL_TOKEN_KEY` (AES-256-GCM), the scope is `gmail.modify` — read the
+  labelled messages and drop the label, never delete or send — and
+  disconnecting revokes the grant at Google. Message ids are logged so a
+  re-run of the poll cannot create the task twice. See
+  [ADR 0002](docs/adr/0002-gmail-polling-intake.md).
+
 ### Fixed
 
 - **A deploy no longer breaks the tab you already had open.** Server Action

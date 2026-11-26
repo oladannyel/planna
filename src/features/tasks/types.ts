@@ -1,6 +1,6 @@
 export type TaskStatus = "todo" | "in_progress" | "done" | "cancelled";
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
-export type TaskSource = "manual" | "ai_parsed" | "request_link";
+export type TaskSource = "manual" | "ai_parsed" | "request_link" | "email";
 
 export interface StatusHistoryEntry {
   status: TaskStatus;

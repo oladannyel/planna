@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { MobileNav, Sidebar, SidebarProvider, TopBar } from "@/components/layout";
 import { ToastProvider } from "@/components/ui";
 import { CarryoverNotifier } from "@/features/daily/CarryoverNotifier";
+import { listNotifications, unreadNotificationCount } from "@/features/notifications";
 import { countCarryovers } from "@/features/tasks/queries";
 import { ensureWorkspace } from "@/features/workspace";
 import { logger } from "@/lib/logger";
@@ -39,13 +40,25 @@ export default async function DashboardLayout({
   const carryoverResult = await countCarryovers();
   const carryoverCount = carryoverResult.ok ? carryoverResult.value : 0;
 
+  // The bell is in the layout, so its data is fetched once per navigation
+  // alongside the carryover count rather than from the client after paint.
+  const [notificationsResult, unreadCount] = await Promise.all([
+    listNotifications(10),
+    unreadNotificationCount(),
+  ]);
+  const notifications = notificationsResult.ok ? notificationsResult.value : [];
+
   return (
     <ToastProvider>
       <SidebarProvider>
         <div className="flex min-h-dvh bg-canvas">
           <Sidebar workspaceName={workspaceName} />
           <div className="flex min-w-0 flex-1 flex-col">
-            <TopBar email={user.email ?? ""} />
+            <TopBar
+              email={user.email ?? ""}
+              notifications={notifications}
+              unreadCount={unreadCount}
+            />
             <main className="flex-1 px-4 pb-24 pt-6 md:px-6 md:pb-8">{children}</main>
             <MobileNav />
           </div>

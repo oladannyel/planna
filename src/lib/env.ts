@@ -30,6 +30,22 @@ const envSchema = z.object({
   // over a job that is not running. `/api/cron/ai-health` refuses to serve
   // without it instead, which puts the failure where the risk is.
   CRON_SECRET: z.string().min(16).optional(),
+
+  // ─── Outbound mail ────────────────────────────────────────────────────────
+  // Optional on purpose. A self-hosted clone must boot without an email
+  // account, so a missing key degrades to a transport that logs the mail it
+  // would have sent and leaves the outbox row to retry (D5). Required only
+  // for mail to actually leave the machine.
+  RESEND_API_KEY: z.string().min(1).optional(),
+  EMAIL_FROM: z.string().min(3).default("plAnna <onboarding@resend.dev>"),
+
+  // ─── Email task intake ────────────────────────────────────────────────────
+  // 32 random bytes, base64, sealing the Gmail refresh token at rest. Absent
+  // means the connect flow refuses to start rather than storing a mailbox
+  // credential in the clear.
+  EMAIL_TOKEN_KEY: z.string().min(1).optional(),
+  GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+  GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
 });
 
 /**

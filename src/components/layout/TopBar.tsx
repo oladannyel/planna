@@ -4,11 +4,21 @@ import { LogOut, Menu, Search } from "lucide-react";
 
 import { ThemeToggler } from "@/components/theme";
 import { FIELD_BASE } from "@/components/ui/Input";
+import { NotificationBell } from "@/features/notifications/NotificationBell";
+import type { BellNotification } from "@/features/notifications/queries";
 import { cn } from "@/lib/cn";
 
 import { useSidebar } from "./SidebarProvider";
 
-export function TopBar({ email }: { email: string }) {
+export function TopBar({
+  email,
+  notifications = [],
+  unreadCount = 0,
+}: {
+  email: string;
+  notifications?: BellNotification[];
+  unreadCount?: number;
+}) {
   const { setMobileOpen } = useSidebar();
 
   return (
@@ -38,6 +48,7 @@ export function TopBar({ email }: { email: string }) {
 
       <div className="ms-auto flex items-center gap-2">
         <span className="hidden truncate text-sm text-text-secondary sm:inline">{email}</span>
+        <NotificationBell items={notifications} unread={unreadCount} />
         <ThemeToggler />
         <form action="/auth/signout" method="post">
           <button

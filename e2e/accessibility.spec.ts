@@ -53,6 +53,8 @@ const AUTHENTICATED_PAGES = [
   "/analytics",
   "/reports",
   "/ethics",
+  "/requests",
+  "/settings/email",
 ] as const;
 
 test.describe("accessibility", () => {

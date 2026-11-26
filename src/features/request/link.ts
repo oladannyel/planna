@@ -34,3 +34,8 @@ export async function publicOrigin(): Promise<string> {
 export function requestLinkFor(origin: string, slug: string): string {
   return `${trimTrailingSlash(origin)}/request/${slug}`;
 }
+
+/** The public URL where a requester follows one request, no account needed. */
+export function requestStatusLinkFor(origin: string, token: string): string {
+  return `${trimTrailingSlash(origin)}/request/status/${token}`;
+}

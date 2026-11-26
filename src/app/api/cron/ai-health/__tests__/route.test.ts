@@ -9,6 +9,7 @@ const h = vi.hoisted(() => ({
   // production: changing the secret takes a redeploy, not a request.
   secret: { value: undefined as string | undefined },
   prune: vi.fn(),
+  drain: vi.fn(),
 }));
 
 vi.mock("@/features/ai-health", () => ({
@@ -18,6 +19,15 @@ vi.mock("@/features/ai-health", () => ({
 vi.mock("@/lib/env", () => ({
   get env() {
     return { CRON_SECRET: h.secret.value };
+  },
+}));
+
+// The same daily run drains any mail that could not be sent when it was
+// queued. Stubbed here: this file tests the route, not the outbox.
+vi.mock("@/features/notifications", () => ({
+  drainOutbox: () => {
+    h.drain();
+    return Promise.resolve({ ok: true, value: { attempted: 0, sent: 0 } });
   },
 }));
 
