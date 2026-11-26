@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { runHealthCheck } from "@/features/ai-health";
+import { drainOutbox } from "@/features/notifications";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { pruneRequestThrottle } from "@/lib/throttle-maintenance";
@@ -56,6 +57,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const pruned = await pruneRequestThrottle();
   if (!pruned.ok) {
     logger.warn("Throttle prune failed", { error: pruned.error.message });
+  }
+
+  // Mail that could not be sent when it was queued — a provider blip, or a
+  // deployment that had no RESEND_API_KEY yet. Also logged, never fatal.
+  const drained = await drainOutbox();
+  if (!drained.ok) {
+    logger.warn("Outbox drain failed", { error: drained.error.message });
+  } else if (drained.value.attempted > 0) {
+    logger.info("Outbox drained", drained.value);
   }
 
   const report = await runHealthCheck();

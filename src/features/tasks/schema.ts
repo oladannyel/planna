@@ -17,6 +17,10 @@ export const requestInputSchema = z.object({
   title: z.string().min(1).max(500),
   description: z.string().min(10).max(5000),
   requesterName: z.string().min(1).max(100),
+  // Optional: a colleague may not want to give an address, and the token
+  // status page works without one. Supplied, it is the only way they hear
+  // about a decision without asking.
+  requesterEmail: z.string().email().max(254).optional(),
   urgency: z.enum(["low", "medium", "high", "urgent"]),
   desiredDeadline: z.string().regex(ISO_DATE_RE).optional(),
   slug: z.string().min(1), // workspace slug from URL

@@ -21,15 +21,16 @@ It was built for one person's daily work across many parallel projects. It gener
 
 ## What it does
 
-| Capability                   | What it means in practice                                                                                                                                                                |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Natural-language capture** | Type _"ship the pricing API, review Tunde's PR, draft the Q3 deck"_ into a chat box. plAnna parses it into separate tasks with titles, priorities, tags, effort estimates and deadlines. |
-| **Kanban board**             | Drag tasks across `todo → in progress → done`, with a `cancelled` lane and per-status archives.                                                                                          |
-| **Daily & weekly planning**  | A daily focus view, a week planner, and automatic carry-over flagging so slipped work stays visible instead of vanishing.                                                                |
-| **Analytics**                | Where time went by project and tag, attention distribution, and honest on-time completion rates measured against real deadlines.                                                         |
-| **Monthly & AI reports**     | Generated narrative summaries of a period's work, built from your own task history.                                                                                                      |
-| **Ethics check-in**          | A configurable reflection prompt set — the part of the tool that asks questions back.                                                                                                    |
-| **Request links**            | A public `/request/[slug]` link so colleagues can file a task into your board without an account.                                                                                        |
+| Capability                   | What it means in practice                                                                                                                                                                                                                                                                    |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Natural-language capture** | Type _"ship the pricing API, review Tunde's PR, draft the Q3 deck"_ into a chat box. plAnna parses it into separate tasks with titles, priorities, tags, effort estimates and deadlines.                                                                                                     |
+| **Kanban board**             | Drag tasks across `todo → in progress → done`, with a `cancelled` lane and per-status archives.                                                                                                                                                                                              |
+| **Daily & weekly planning**  | A daily focus view, a week planner, and automatic carry-over flagging so slipped work stays visible instead of vanishing.                                                                                                                                                                    |
+| **Analytics**                | Where time went by project and tag, attention distribution, and honest on-time completion rates measured against real deadlines.                                                                                                                                                             |
+| **Monthly & AI reports**     | Generated narrative summaries of a period's work, built from your own task history.                                                                                                                                                                                                          |
+| **Ethics check-in**          | A configurable reflection prompt set — the part of the tool that asks questions back.                                                                                                                                                                                                        |
+| **Request links**            | A public `/request/[slug]` link so colleagues can file a task into your board without an account. Nothing reaches the board un-triaged: a request waits in an inbox, you accept or decline it, and the person who asked is emailed at every step and can follow it on a private status page. |
+| **Email task intake**        | Connect a Gmail account, label a message, and an hourly job turns it into a task — parsed like anything else you type.                                                                                                                                                                       |
 
 ## Screenshots
 
@@ -219,7 +220,8 @@ src/
 │   ├── (dashboard)/      # Board, daily, weekly, monthly, yearly, analytics, reports, ethics
 │   ├── api/              # Route handlers
 │   ├── auth/             # OAuth callback and signout
-│   └── request/[slug]/   # Public task-request links
+│   ├── request/[slug]/   # Public task-request links
+│   └── request/status/   # Public per-request status page (token-addressed)
 ├── components/           # ui/ primitives, layout/, shared/
 ├── features/             # Vertical slices, one folder per domain
 │   ├── tasks/            # Capture, parsing, task CRUD
@@ -228,7 +230,9 @@ src/
 │   ├── analytics/        # Metrics and charts
 │   ├── monthly/ reports/ # Generated summaries
 │   ├── ethics/           # Reflection check-ins
-│   ├── request/          # Inbound request links
+│   ├── request/          # Inbound request links, inbox and decisions
+│   ├── notifications/    # Bell items and the outbound mail outbox
+│   ├── email-intake/     # Gmail OAuth, polling, message → task
 │   └── workspace/        # Workspace and slug handling
 ├── hooks/                # Shared React hooks
 ├── lib/                  # env, logger, result, date, cn, supabase clients
@@ -263,6 +267,22 @@ returning` (see [`0007_request_throttle.sql`](supabase/migrations/0007_request_t
   _before_ the slug is looked up, so an unknown slug cannot be used as a free
   existence oracle, and the workspace slot _before_ the model call, so the
   expensive half of an abuse attempt never runs.
+- **A stranger's request is not a commitment.** A submission writes a
+  `requests` row and waits; the board only ever holds work you accepted (see
+  [ADR 0001](docs/adr/0001-request-approval-inbox.md)). Accepting is also
+  where the model call happens, so an unauthenticated caller can spend a row
+  and not a model call.
+- **Notifications fail safe, not silently.** Every outbound mail is written to
+  `email_outbox` before it is sent, and a failed send leaves the row pending
+  for the daily cron to retry. With no `RESEND_API_KEY` the whole feature
+  still works — the mail queues, the status page carries the same
+  information, and nothing is marked sent that was not.
+- **A connected mailbox is encrypted and revocable.** The Gmail refresh token
+  is sealed with AES-256-GCM (`EMAIL_TOKEN_KEY`), never selected into
+  anything a client can see, and disconnecting revokes the grant at Google as
+  well as deleting the row. The scope is `gmail.modify`: read the labelled
+  messages and drop the label, never delete or send. See
+  [ADR 0002](docs/adr/0002-gmail-polling-intake.md).
 - **Validated environment.** `src/lib/env.ts` parses every variable through Zod at startup, so a misconfiguration fails loudly and immediately.
 - **Secrets cannot reach a log line.** `src/lib/logger.ts` redacts
   secret-shaped values and secret-named keys from every message and context

@@ -4,6 +4,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const h = vi.hoisted(() => ({ ingestRequest: vi.fn() }));
 
 vi.mock("@/features/request/ingest", () => ({ ingestRequest: h.ingestRequest }));
+// The route builds the links in its response from the request's own host, and
+// `headers()` only resolves inside a request scope.
+vi.mock("next/headers", () => ({
+  headers: () => Promise.resolve(new Headers({ host: "planna.test" })),
+}));
 
 const { POST } = await import("../route");
 
@@ -43,7 +48,10 @@ describe("POST /api/request", () => {
   });
 
   it("returns 201 on success", async () => {
-    h.ingestRequest.mockResolvedValue({ ok: true, value: { taskId: "t1" } });
+    h.ingestRequest.mockResolvedValue({
+      ok: true,
+      value: { requestId: "req-1", statusUrl: "https://planna.test/request/status/abc" },
+    });
     const res = await POST(request(validBody));
     expect(res.status).toBe(201);
   });
@@ -76,16 +84,26 @@ describe("POST /api/request", () => {
    * could nominate someone else's quota.
    */
   it("forwards the client address from the request headers", async () => {
-    h.ingestRequest.mockResolvedValue({ ok: true, value: { taskId: "t1" } });
+    h.ingestRequest.mockResolvedValue({
+      ok: true,
+      value: { requestId: "req-1", statusUrl: "https://planna.test/request/status/abc" },
+    });
     await POST(request(validBody, false, { "x-real-ip": "198.51.100.77" }));
     expect(h.ingestRequest).toHaveBeenCalledWith(expect.objectContaining({ slug: "demo" }), {
       address: "198.51.100.77",
+      origin: "https://planna.test",
     });
   });
 
   it("forwards a null address when no header identifies the caller", async () => {
-    h.ingestRequest.mockResolvedValue({ ok: true, value: { taskId: "t1" } });
+    h.ingestRequest.mockResolvedValue({
+      ok: true,
+      value: { requestId: "req-1", statusUrl: "https://planna.test/request/status/abc" },
+    });
     await POST(request(validBody, false, {}));
-    expect(h.ingestRequest).toHaveBeenCalledWith(expect.anything(), { address: null });
+    expect(h.ingestRequest).toHaveBeenCalledWith(expect.anything(), {
+      address: null,
+      origin: "https://planna.test",
+    });
   });
 });

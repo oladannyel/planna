@@ -61,3 +61,67 @@ export async function requestOwnerName(slug: string): Promise<string | null> {
 
   return ownerDisplayName(metadata, workspace.name);
 }
+
+export interface RequestOwner {
+  workspaceId: string;
+  ownerId: string;
+  /** What to call them in mail and on the form. Null when nothing is set. */
+  name: string | null;
+  /** Where owner notifications go. Null if the account somehow has none. */
+  email: string | null;
+}
+
+/**
+ * The workspace behind a slug, with whatever is known about its owner.
+ *
+ * One lookup for the three things the request path needs — the workspace to
+ * write into, the name to address mail from, and the address to notify. The
+ * display-name-only `requestOwnerName` above stays, because the public form
+ * must not have an owner's email address anywhere in the data it renders.
+ */
+export async function requestOwnerForSlug(slug: string): Promise<RequestOwner | null> {
+  const admin = createAdminClient();
+
+  const { data: workspace, error } = await admin
+    .from("workspaces")
+    .select("id, name, owner_id")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error || !workspace) return null;
+
+  const { data } = await admin.auth.admin.getUserById(workspace.owner_id);
+  const metadata = data?.user?.user_metadata as
+    { display_name?: unknown; full_name?: unknown } | undefined;
+
+  return {
+    workspaceId: workspace.id,
+    ownerId: workspace.owner_id,
+    name: ownerDisplayName(metadata, workspace.name),
+    email: data?.user?.email ?? null,
+  };
+}
+
+/** The same, for a workspace already resolved by id (the decision actions). */
+export async function requestOwnerForWorkspace(workspaceId: string): Promise<RequestOwner | null> {
+  const admin = createAdminClient();
+
+  const { data: workspace, error } = await admin
+    .from("workspaces")
+    .select("id, name, owner_id")
+    .eq("id", workspaceId)
+    .maybeSingle();
+
+  if (error || !workspace) return null;
+
+  const { data } = await admin.auth.admin.getUserById(workspace.owner_id);
+  const metadata = data?.user?.user_metadata as
+    { display_name?: unknown; full_name?: unknown } | undefined;
+
+  return {
+    workspaceId: workspace.id,
+    ownerId: workspace.owner_id,
+    name: ownerDisplayName(metadata, workspace.name),
+    email: data?.user?.email ?? null,
+  };
+}

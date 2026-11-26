@@ -44,6 +44,7 @@ function submitErrorMessage(error: AppError): string {
  */
 export function RequestForm({ slug, ownerName }: { slug: string; ownerName?: string | null }) {
   const [requesterName, setRequesterName] = useState("");
+  const [requesterEmail, setRequesterEmail] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [urgency, setUrgency] = useState<TaskPriority>("medium");
@@ -51,15 +52,18 @@ export function RequestForm({ slug, ownerName }: { slug: string; ownerName?: str
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [statusUrl, setStatusUrl] = useState<string | null>(null);
 
   function reset(): void {
     setRequesterName("");
+    setRequesterEmail("");
     setTitle("");
     setDescription("");
     setUrgency("medium");
     setDesiredDeadline("");
     setError(null);
     setDone(false);
+    setStatusUrl(null);
   }
 
   async function submit(): Promise<void> {
@@ -71,10 +75,12 @@ export function RequestForm({ slug, ownerName }: { slug: string; ownerName?: str
       title,
       description,
       urgency,
+      ...(requesterEmail.trim() ? { requesterEmail: requesterEmail.trim() } : {}),
       ...(desiredDeadline ? { desiredDeadline } : {}),
     });
     setBusy(false);
     if (result.ok) {
+      setStatusUrl(result.value.statusUrl);
       setDone(true);
     } else {
       setError(submitErrorMessage(result.error));
@@ -82,7 +88,13 @@ export function RequestForm({ slug, ownerName }: { slug: string; ownerName?: str
   }
 
   if (done) {
-    return <RequestSuccess onReset={reset} />;
+    return (
+      <RequestSuccess
+        onReset={reset}
+        statusUrl={statusUrl}
+        emailed={requesterEmail.trim().length > 0}
+      />
+    );
   }
 
   return (
@@ -99,8 +111,8 @@ export function RequestForm({ slug, ownerName }: { slug: string; ownerName?: str
         </h1>
         <p className="mt-1 text-sm text-text-secondary">
           {ownerName
-            ? `Describe what you need and it'll go straight to ${ownerName}'s planning board.`
-            : "Describe what you need and it'll be added to the planning board."}
+            ? `Describe what you need. ${ownerName} decides whether to take it on, and you'll be told either way.`
+            : "Describe what you need. The owner decides whether to take it on, and you'll be told either way."}
         </p>
       </div>
 
@@ -115,6 +127,25 @@ export function RequestForm({ slug, ownerName }: { slug: string; ownerName?: str
           onChange={(event) => setRequesterName(event.target.value)}
           className={inputClass}
         />
+      </div>
+
+      <div className="space-y-1">
+        <label htmlFor="requesterEmail" className="block text-sm font-medium text-text-secondary">
+          Your email <span className="text-text-muted">(optional)</span>
+        </label>
+        <input
+          id="requesterEmail"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          value={requesterEmail}
+          onChange={(event) => setRequesterEmail(event.target.value)}
+          className={inputClass}
+          aria-describedby="requesterEmail-help"
+        />
+        <p id="requesterEmail-help" className="text-xs text-text-muted">
+          Only used to tell you whether this was accepted and when it is done.
+        </p>
       </div>
 
       <div className="space-y-1">

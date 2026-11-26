@@ -30,7 +30,10 @@ describe("RequestForm", () => {
   });
 
   it("submits the form with the workspace slug and shows success", async () => {
-    h.submitRequest.mockResolvedValue({ ok: true, value: { taskId: "t1" } });
+    h.submitRequest.mockResolvedValue({
+      ok: true,
+      value: { requestId: "req-1", statusUrl: "https://planna.test/request/status/abc" },
+    });
     const user = userEvent.setup();
     render(<RequestForm slug="demo" />);
 
@@ -38,7 +41,7 @@ describe("RequestForm", () => {
     await user.click(screen.getByRole("button", { name: "Submit request" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Request submitted")).toBeInTheDocument();
+      expect(screen.getByText("Request sent")).toBeInTheDocument();
     });
     const payload = h.submitRequest.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(payload.slug).toBe("demo");
@@ -59,7 +62,10 @@ describe("RequestForm", () => {
   });
 
   it("includes a changed urgency in the payload", async () => {
-    h.submitRequest.mockResolvedValue({ ok: true, value: { taskId: "t1" } });
+    h.submitRequest.mockResolvedValue({
+      ok: true,
+      value: { requestId: "req-1", statusUrl: "https://planna.test/request/status/abc" },
+    });
     const user = userEvent.setup();
     render(<RequestForm slug="demo" />);
 
@@ -67,7 +73,7 @@ describe("RequestForm", () => {
     await user.selectOptions(screen.getByLabelText("Urgency"), "urgent");
     await user.click(screen.getByRole("button", { name: "Submit request" }));
 
-    await waitFor(() => screen.getByText("Request submitted"));
+    await waitFor(() => screen.getByText("Request sent"));
     const payload = h.submitRequest.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(payload.urgency).toBe("urgent");
   });
@@ -89,13 +95,16 @@ describe("RequestForm", () => {
   });
 
   it("lets the user submit another after success", async () => {
-    h.submitRequest.mockResolvedValue({ ok: true, value: { taskId: "t1" } });
+    h.submitRequest.mockResolvedValue({
+      ok: true,
+      value: { requestId: "req-1", statusUrl: "https://planna.test/request/status/abc" },
+    });
     const user = userEvent.setup();
     render(<RequestForm slug="demo" />);
 
     await fillRequiredFields(user);
     await user.click(screen.getByRole("button", { name: "Submit request" }));
-    await waitFor(() => screen.getByText("Request submitted"));
+    await waitFor(() => screen.getByText("Request sent"));
 
     await user.click(screen.getByRole("button", { name: "Submit another request" }));
     expect(screen.getByRole("button", { name: "Submit request" })).toBeInTheDocument();

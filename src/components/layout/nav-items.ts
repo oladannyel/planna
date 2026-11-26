@@ -4,6 +4,8 @@ import {
   CalendarDays,
   CalendarRange,
   ClipboardList,
+  Inbox,
+  Mail,
   FileText,
   LayoutGrid,
   Scale,
@@ -23,11 +25,12 @@ export interface NavItem {
 }
 
 /** Sidebar grouping, mirroring TailAdmin's labelled sections. */
-export type NavGroup = "plan" | "review";
+export type NavGroup = "plan" | "review" | "settings";
 
 export const NAV_GROUPS: { key: NavGroup; label: string }[] = [
   { key: "plan", label: "Plan" },
   { key: "review", label: "Review" },
+  { key: "settings", label: "Settings" },
 ];
 
 export const NAV_ITEMS: NavItem[] = [
@@ -35,6 +38,7 @@ export const NAV_ITEMS: NavItem[] = [
   { group: "plan", href: "/daily", label: "Daily", icon: CalendarDays, mobile: true },
   { group: "plan", href: "/weekly", label: "Weekly", icon: CalendarRange, mobile: true },
   { group: "plan", href: "/monthly", label: "Monthly", icon: ClipboardList, mobile: true },
+  { group: "plan", href: "/requests", label: "Requests", icon: Inbox, mobile: false },
   { group: "review", href: "/analytics", label: "Analytics", icon: BarChart3, mobile: false },
   { group: "review", href: "/reports", label: "Reports", icon: FileText, mobile: false },
   { group: "review", href: "/ethics", label: "Ethics", icon: Scale, mobile: false },
@@ -46,4 +50,5 @@ export const NAV_ITEMS: NavItem[] = [
     mobile: false,
     upcoming: true,
   },
+  { group: "settings", href: "/settings/email", label: "Email intake", icon: Mail, mobile: false },
 ];

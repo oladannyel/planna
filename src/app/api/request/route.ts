@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { ingestRequest } from "@/features/request/ingest";
+import { publicOrigin } from "@/features/request/link";
 import { clientAddress } from "@/features/request/throttle";
 import { requestInputSchema } from "@/features/tasks/schema";
 import { logger } from "@/lib/logger";
@@ -24,9 +25,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const result = await ingestRequest(validated.data, {
     address: clientAddress(req.headers),
+    origin: await publicOrigin(),
   });
   if (result.ok) {
-    return NextResponse.json({ success: true }, { status: 201 });
+    // `success` is kept for callers written against the old contract; the two
+    // new fields are additive (ADR 0001). `statusUrl` is the only way an
+    // API caller can hand their user somewhere to follow the request.
+    return NextResponse.json(
+      { success: true, requestId: result.value.requestId, statusUrl: result.value.statusUrl },
+      { status: 201 },
+    );
   }
 
   if (result.error.code === "NOT_FOUND") {
