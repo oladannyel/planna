@@ -367,7 +367,6 @@ $$;
 revoke all on function claim_request_slot(text, integer, integer) from public, anon, authenticated;
 revoke all on function prune_request_throttle(integer) from public, anon, authenticated;
 
-
 -- ─────────────────────────────────────────────────────────────────────────
 -- 0008_request_inbox.sql
 -- ─────────────────────────────────────────────────────────────────────────
@@ -595,3 +594,4 @@ create policy "email_connections_owner" on email_connections
 -- The ingest log is bookkeeping for the poll. RLS on, no policies: deny by
 -- default, service role only.
 revoke all on table email_ingest_log from anon, authenticated;
+
